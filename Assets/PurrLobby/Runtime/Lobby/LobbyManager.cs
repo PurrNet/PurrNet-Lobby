@@ -122,18 +122,6 @@ namespace PurrLobby
             };
         }
 
-
-        // Public API for interacting with the provider
-        public void Initialize()
-        {
-            RunTask(async () =>
-            {
-                EnsureProviderSet();
-                await _currentProvider.InitializeAsync();
-                onInitialized?.Invoke();
-            });
-        }
-
         public void Shutdown()
         {
             EnsureProviderSet();

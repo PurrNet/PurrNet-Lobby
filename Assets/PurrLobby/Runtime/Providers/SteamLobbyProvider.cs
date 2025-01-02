@@ -10,6 +10,7 @@
 using Steamworks;
 #endif
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -32,6 +33,8 @@ namespace PurrLobby.Providers
         public event UnityAction<IEnumerable<LobbyUser>> OnPlayerListUpdated;
         public event UnityAction<string> OnError;
 
+        [SerializeField] private bool forceSteamInit = false;
+
         private bool _initialized;
         private bool _runCallbacks;
         private CSteamID _currentLobby;
@@ -42,29 +45,43 @@ namespace PurrLobby.Providers
             if (_initialized)
                 return;
 
-            if (!SteamAPI.Init())
+            if (forceSteamInit)
             {
-                Debug.LogError("SteamAPI initialization failed.");
-                OnError?.Invoke("SteamAPI initialization failed.");
-                return;
+                if (!SteamAPI.Init())
+                {
+                    Debug.LogError("SteamAPI initialization failed.");
+                    OnError?.Invoke("SteamAPI initialization failed.");
+                    return;
+                }
             }
 
-            _initialized = true;
-            _runCallbacks = true;
-
-            // Start the callback runner
-            RunSteamCallbacks();
-        }
-
-        public void Shutdown()
-        {
-            if (_initialized)
+            int retries = 100;
+            while (retries > 0)
             {
-                _runCallbacks = false;
-                SteamAPI.Shutdown();
-                _initialized = false;
+                try
+                {
+                    var steamID = SteamUser.GetSteamID();
+                    if (steamID.m_SteamID != 0)
+                    {
+                        _initialized = true;
+                        _runCallbacks = true;
+                        RunSteamCallbacks();
+                        Debug.Log("Steamworks initialized successfully.");
+                        return;
+                    }
+                }
+                catch (System.InvalidOperationException)
+                {
+                    
+                }
+
+                await Task.Delay(100);
+                retries--;
             }
+
+            Debug.LogWarning("Steamworks is not initialized after retries. Initialization skipped.");
         }
+
 
         private async void RunSteamCallbacks()
         {
@@ -72,6 +89,21 @@ namespace PurrLobby.Providers
             {
                 SteamAPI.RunCallbacks();
                 await Task.Delay(16);
+            }
+        }
+
+        public void Shutdown()
+        {
+            if (_initialized)
+            {
+                _runCallbacks = false;
+
+                if (forceSteamInit)
+                {
+                    SteamAPI.Shutdown();
+                }
+
+                _initialized = false;
             }
         }
 
