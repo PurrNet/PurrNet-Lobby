@@ -47,7 +47,7 @@ namespace PurrLobby
             if (CurrentProvider != null)
                 SetProvider(CurrentProvider);
             else
-                Debug.LogWarning("No lobby provider assigned to LobbyManager.");
+                PurrLogger.LogWarning("No lobby provider assigned to LobbyManager.");
         }
 
         private void Update()
@@ -61,7 +61,14 @@ namespace PurrLobby
 
         private void InvokeDelayed(Action action)
         {
-            _delayedActions.Enqueue(action);
+            try
+            {
+                _delayedActions.Enqueue(action);
+            }
+            catch (Exception ex)
+            {
+                PurrLogger.LogError($"Error in InvokeDelayed: {ex.Message}");
+            }
         }
 
         // Set or switch the current provider
@@ -98,6 +105,7 @@ namespace PurrLobby
                 _currentLobby = default;
                 OnRoomLeft.Invoke();
             });
+            
             _currentProvider.OnRoomUpdated += room => InvokeDelayed(() =>
             {
                 if (!HasRoomStateChanged(room)) return;
@@ -109,7 +117,7 @@ namespace PurrLobby
 
             _currentProvider.OnPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError += error => InvokeDelayed(() => OnError.Invoke(error));
-
+            
             _currentProvider.OnRoomUpdated += room =>
             {
                 if (room.IsValid)
@@ -288,7 +296,7 @@ namespace PurrLobby
             task.ContinueWith(t =>
             {
                 if (t.Exception != null)
-                    Debug.LogError($"Task Error: {t.Exception.InnerException?.Message}");
+                    PurrLogger.LogError($"Task Error: {t.Exception.InnerException?.Message}");
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 

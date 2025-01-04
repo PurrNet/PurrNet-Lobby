@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrLobby
@@ -30,16 +32,19 @@ namespace PurrLobby
             {
                 if (!child.TryGetComponent(out MemberEntry member))
                     continue;
-                
-                if(room.Members.Exists(x => x.Id == member.MemberId))
-                    member.SetReady(room.Members.Find(x => x.Id == member.MemberId).IsReady);
+
+                var matchingMember = room.Members.Find(x => x.Id == member.MemberId);
+                if (!string.IsNullOrEmpty(matchingMember.Id))
+                {
+                    member.SetReady(matchingMember.IsReady);
+                }
             }
         }
 
         private void HandleNewMembers(LobbyRoom room)
         {
             var existingMembers = content.GetComponentsInChildren<MemberEntry>();
-            
+    
             foreach (var member in room.Members)
             {
                 if (Array.Exists(existingMembers, x => x.MemberId == member.Id))
@@ -52,6 +57,8 @@ namespace PurrLobby
 
         private void HandleLeftMembers(LobbyRoom room)
         {
+            var childrenToRemove = new List<Transform>();
+
             for (int i = 0; i < content.childCount; i++)
             {
                 var child = content.GetChild(i);
@@ -60,10 +67,15 @@ namespace PurrLobby
 
                 if (!room.Members.Exists(x => x.Id == member.MemberId))
                 {
-                    Destroy(child.gameObject);
-                    i--;
+                    childrenToRemove.Add(child);
                 }
             }
+
+            foreach (var child in childrenToRemove)
+            {
+                Destroy(child.gameObject);
+            }
         }
+
     }
 }

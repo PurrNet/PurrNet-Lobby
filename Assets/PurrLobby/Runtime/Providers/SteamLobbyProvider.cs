@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -41,9 +42,10 @@ namespace PurrLobby.Providers
         private bool _initialized;
         private bool _runCallbacks;
         private CSteamID _currentLobby;
-        private Callback<LobbyDataUpdate_t> _lobbyDataUpdateCallback;
         public CSteamID CurrentLobby => _currentLobby;
+        private Callback<LobbyDataUpdate_t> _lobbyDataUpdateCallback;
         private Callback<AvatarImageLoaded_t> _avatarImageLoadedCallback;
+        private Callback<LobbyChatUpdate_t> _lobbyChatUpdateCallback;
 
         public async Task InitializeAsync()
         {
@@ -54,7 +56,7 @@ namespace PurrLobby.Providers
             {
                 if (!SteamAPI.Init())
                 {
-                    Debug.LogError("SteamAPI initialization failed.");
+                    PurrLogger.LogError("SteamAPI initialization failed.");
                     OnError?.Invoke("SteamAPI initialization failed.");
                     return;
                 }
@@ -62,6 +64,7 @@ namespace PurrLobby.Providers
             
             _avatarImageLoadedCallback = Callback<AvatarImageLoaded_t>.Create(OnAvatarImageLoaded);
             _lobbyDataUpdateCallback = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
+            _lobbyChatUpdateCallback = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
 
             int retries = 100;
             while (retries > 0)
@@ -74,7 +77,7 @@ namespace PurrLobby.Providers
                         _initialized = true;
                         _runCallbacks = true;
                         RunSteamCallbacks();
-                        Debug.Log("Steamworks initialized successfully.");
+                        PurrLogger.Log("Steamworks initialized successfully.");
                         return;
                     }
                 }
@@ -84,7 +87,7 @@ namespace PurrLobby.Providers
                 retries--;
             }
 
-            Debug.LogWarning("Steamworks is not initialized after retries. Initialization skipped.");
+            PurrLogger.LogWarning("Steamworks is not initialized after retries. Initialization skipped.");
         }
 
 
@@ -97,47 +100,52 @@ namespace PurrLobby.Providers
             }
         }
         
+        private void OnLobbyChatUpdate(LobbyChatUpdate_t callback)
+        {
+            if (_currentLobby.m_SteamID != callback.m_ulSteamIDLobby)
+                return;
+
+            var stateChange = (EChatMemberStateChange)callback.m_rgfChatMemberStateChange;
+
+            if (stateChange.HasFlag(EChatMemberStateChange.k_EChatMemberStateChangeEntered))
+            {
+                //PurrLogger.Log($"User {callback.m_ulSteamIDUserChanged} joined the lobby.");
+            }
+
+            if (stateChange.HasFlag(EChatMemberStateChange.k_EChatMemberStateChangeLeft) ||
+                stateChange.HasFlag(EChatMemberStateChange.k_EChatMemberStateChangeDisconnected))
+            {
+                //PurrLogger.Log($"User {callback.m_ulSteamIDUserChanged} left the lobby.");
+            }
+
+            var data = SteamMatchmaking.GetLobbyData(_currentLobby, "Name");
+            var properties = GetLobbyProperties(_currentLobby);
+            var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
+
+            var updatedRoom = LobbyRoomFactory.Create(
+                data,
+                _currentLobby.m_SteamID.ToString(),
+                SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                updatedLobbyUsers,
+                properties
+            );
+
+            OnRoomUpdated?.Invoke(updatedRoom);
+        }
+        
         private void OnLobbyDataUpdate(LobbyDataUpdate_t callback)
         {
-            Debug.Log($"Lobby data updated: {callback.m_ulSteamIDLobby}");
             if (_currentLobby.m_SteamID != callback.m_ulSteamIDLobby)
                 return;
 
             var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
-            var updatedProperties = new Dictionary<string, string>();
-
-            int propertyCount = SteamMatchmaking.GetLobbyDataCount(_currentLobby);
-            for (int i = 0; i < propertyCount; i++)
-            {
-                int keyBufferSize = 256;
-                int valueBufferSize = 256;
-
-                string key = new string('\0', keyBufferSize);
-                string value = new string('\0', valueBufferSize);
-
-                bool result = SteamMatchmaking.GetLobbyDataByIndex(
-                    _currentLobby, 
-                    i, 
-                    out key, 
-                    keyBufferSize, 
-                    out value, 
-                    valueBufferSize
-                );
-
-                if (result)
-                {
-                    key = key.TrimEnd('\0');
-                    value = value.TrimEnd('\0');
-                    updatedProperties[key] = value;
-                }
-            }
 
             var updatedRoom = LobbyRoomFactory.Create(
                 SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 _currentLobby.m_SteamID.ToString(),
                 SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 updatedLobbyUsers,
-                updatedProperties
+                GetLobbyProperties(_currentLobby)
             );
             
             OnRoomUpdated?.Invoke(updatedRoom);
@@ -149,6 +157,7 @@ namespace PurrLobby.Providers
             {
                 _runCallbacks = false;
                 _lobbyDataUpdateCallback = null;
+                _lobbyChatUpdateCallback = null;
 
                 if (handleSteamInit)
                 {
@@ -188,7 +197,7 @@ namespace PurrLobby.Providers
             var userExists = GetLobbyUsers(lobbyId).Any(user => user.Id == userId);
             if (!userExists)
             {
-                Debug.LogError($"User {userId} no longer exists in the lobby.");
+                PurrLogger.LogError($"User {userId} no longer exists in the lobby.");
                 return;
             }
 
@@ -213,12 +222,12 @@ namespace PurrLobby.Providers
 
         public async Task AcceptInviteAsync(string inviteId)
         {
-            Debug.Log($"Invite {inviteId} accepted.");
+            PurrLogger.Log($"Invite {inviteId} accepted.");
         }
 
         public async Task DeclineInviteAsync(string inviteId)
         {
-            Debug.Log($"Invite {inviteId} declined.");
+            PurrLogger.Log($"Invite {inviteId} declined.");
         }
 
         public async Task<LobbyRoom> CreateRoomAsync(int maxPlayers, Dictionary<string, string> roomProperties = null)
@@ -298,39 +307,13 @@ namespace PurrLobby.Providers
                 OnRoomJoinFailed?.Invoke($"Failed to join lobby {roomId}.");
                 return new LobbyRoom { IsValid = false };
             }
-            
-            var roomProperties = new Dictionary<string, string>();
-            int propertyCount = SteamMatchmaking.GetLobbyDataCount(_currentLobby);
-            int keyBufferSize = 256;
-            int valueBufferSize = 256;
-            
-            for (int i = 0; i < propertyCount; i++)
-            {
-                string key = new string('\0', keyBufferSize);
-                string value = new string('\0', valueBufferSize);
-                bool result = SteamMatchmaking.GetLobbyDataByIndex(
-                    _currentLobby, 
-                    i, 
-                    out key, 
-                    keyBufferSize, 
-                    out value, 
-                    valueBufferSize
-                );
-
-                if (result)
-                {
-                    key = key.TrimEnd('\0');
-                    value = value.TrimEnd('\0');
-                    roomProperties[key] = value;
-                }
-            }
 
             var room = LobbyRoomFactory.Create(
                 SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 roomId,
                 SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 GetLobbyUsers(lobbyId),
-                roomProperties
+                GetLobbyProperties(_currentLobby)
             );
 
             OnRoomUpdated?.Invoke(room);
@@ -445,7 +428,7 @@ namespace PurrLobby.Providers
             var steamId = callback.m_steamID;
             if (callback.m_iImage == -1)
             {
-                Debug.LogWarning($"Failed to load avatar for user {steamId}");
+                PurrLogger.LogWarning($"Failed to load avatar for user {steamId}");
                 return;
             }
 
@@ -551,8 +534,41 @@ namespace PurrLobby.Providers
             {
                 SteamMatchmaking.LeaveLobby(_currentLobby);
                 _currentLobby = default;
-                Debug.Log("Left the lobby as the application stopped.");
+                PurrLogger.Log("Left the lobby as the application stopped.");
             }
+        }
+        
+        private Dictionary<string, string> GetLobbyProperties(CSteamID lobbyId)
+        {
+            var properties = new Dictionary<string, string>();
+            int propertyCount = SteamMatchmaking.GetLobbyDataCount(lobbyId);
+
+            for (int i = 0; i < propertyCount; i++)
+            {
+                int keyBufferSize = 256;
+                int valueBufferSize = 256;
+
+                string key = new string('\0', keyBufferSize);
+                string value = new string('\0', valueBufferSize);
+
+                bool result = SteamMatchmaking.GetLobbyDataByIndex(
+                    lobbyId, 
+                    i, 
+                    out key, 
+                    keyBufferSize, 
+                    out value, 
+                    valueBufferSize
+                );
+
+                if (result)
+                {
+                    key = key.TrimEnd('\0');
+                    value = value.TrimEnd('\0');
+                    properties[key] = value;
+                }
+            }
+
+            return properties;
         }
 #endif
     }
