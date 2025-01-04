@@ -31,6 +31,7 @@ namespace PurrLobby.Providers
         public event UnityAction<LobbyUser> OnInviteReceived;
         public event UnityAction<string> OnInviteAccepted;
         public event UnityAction<string> OnInviteDeclined;
+
         public event UnityAction<string> OnLobbyJoinFailed;
         public event UnityAction OnLobbyLeft;
         public event UnityAction<Lobby> OnLobbyUpdated;
@@ -120,6 +121,10 @@ namespace PurrLobby.Providers
             {
                 //PurrLogger.Log($"User {callback.m_ulSteamIDUserChanged} left the lobby.");
             }
+            
+            var ownerId = SteamMatchmaking.GetLobbyOwner(_currentLobby).m_SteamID.ToString();
+            var localId = SteamUser.GetSteamID().m_SteamID.ToString();
+            var isOwner = localId == ownerId;
 
             var data = SteamMatchmaking.GetLobbyData(_currentLobby, "Name");
             var properties = GetLobbyProperties(_currentLobby);
@@ -129,6 +134,7 @@ namespace PurrLobby.Providers
                 data,
                 _currentLobby.m_SteamID.ToString(),
                 SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                isOwner,
                 updatedLobbyUsers,
                 properties
             );
@@ -141,16 +147,20 @@ namespace PurrLobby.Providers
             if (_currentLobby.m_SteamID != callback.m_ulSteamIDLobby)
                 return;
 
-            var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
+            var ownerId = SteamMatchmaking.GetLobbyOwner(_currentLobby).m_SteamID.ToString();
+            var localId = SteamUser.GetSteamID().m_SteamID.ToString();
+            var isOwner = localId == ownerId;
 
+            var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
             var updatedLobby = LobbyFactory.Create(
                 SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 _currentLobby.m_SteamID.ToString(),
                 SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                isOwner,
                 updatedLobbyUsers,
                 GetLobbyProperties(_currentLobby)
             );
-            
+
             OnLobbyUpdated?.Invoke(updatedLobby);
         }
 
@@ -244,6 +254,7 @@ namespace PurrLobby.Providers
 
             var tcs = new TaskCompletionSource<bool>();
             CSteamID lobbyId = default;
+            var lobbyName = $"{SteamFriends.GetPersonaName()}'s Lobby";
 
             void OnLobbyCreated(LobbyCreated_t result, bool ioFailure)
             {
@@ -251,6 +262,8 @@ namespace PurrLobby.Providers
                 {
                     lobbyId = new CSteamID(result.m_ulSteamIDLobby);
                     tcs.TrySetResult(true);
+                    SteamMatchmaking.SetLobbyData(lobbyId, "Name", lobbyName);
+                    SteamMatchmaking.SetLobbyData(lobbyId, "Started", "False");
                 }
                 else
                 {
@@ -261,7 +274,6 @@ namespace PurrLobby.Providers
             var callResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
             var handle = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, maxPlayers);
             callResult.Set(handle);
-            SteamMatchmaking.SetLobbyData(_currentLobby, "Name", $"{SteamFriends.GetPersonaName()}'s Lobby");
 
             if (!await tcs.Task)
                 return new Lobby { IsValid = false };
@@ -277,9 +289,10 @@ namespace PurrLobby.Providers
             }
 
             return LobbyFactory.Create(
-                SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
+                lobbyName,
                 lobbyId.m_SteamID.ToString(),
                 maxPlayers,
+                true,
                 GetLobbyUsers(lobbyId),
                 lobbyProperties
             );
@@ -319,6 +332,7 @@ namespace PurrLobby.Providers
                 SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 lobbyId,
                 SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                false,
                 GetLobbyUsers(cLobbyId),
                 GetLobbyProperties(_currentLobby)
             );
@@ -353,6 +367,7 @@ namespace PurrLobby.Providers
                 }
             }
 
+            SteamMatchmaking.AddRequestLobbyListStringFilter("Started", "False", ELobbyComparison.k_ELobbyComparisonEqual);
             SteamMatchmaking.AddRequestLobbyListResultCountFilter(maxLobbiesToFind);
 
             void OnLobbiesMatching(LobbyMatchList_t result, bool ioFailure)
@@ -383,6 +398,14 @@ namespace PurrLobby.Providers
             callResult.Set(SteamMatchmaking.RequestLobbyList());
 
             return await tcs.Task;
+        }
+        
+        public async Task SetLobbyStartedAsync()
+        {
+            if (!_currentLobby.IsValid())
+                return;
+            
+            SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
         }
         
         private LobbyUser CreateLobbyUser(CSteamID steamId, CSteamID lobbyId)

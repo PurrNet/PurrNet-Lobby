@@ -30,7 +30,7 @@ namespace PurrLobby.Editor
 
             EditorGUILayout.Space();
 
-            DrawRoomStatus();
+            DrawRoomStatus(lobbyManager);
 
             EditorGUILayout.Space();
 
@@ -149,14 +149,14 @@ namespace PurrLobby.Editor
             }
         }
 
-        private void DrawRoomStatus()
+        private void DrawRoomStatus(LobbyManager lobbyManager)
         {
             showRoomStatus = EditorGUILayout.Foldout(showRoomStatus, "Lobby Room Status", true);
             if (!showRoomStatus) return;
 
             EditorGUI.indentLevel++;
 
-            var currentRoom = LobbyManager.CurrentLobby;
+            var currentRoom = lobbyManager.CurrentLobby;
 
             if (currentRoom.IsValid)
             {

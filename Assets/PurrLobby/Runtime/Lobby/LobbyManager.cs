@@ -33,10 +33,19 @@ namespace PurrLobby
         public UnityEvent onShutdown = new UnityEvent();
 
         public ILobbyProvider CurrentProvider => currentProvider as ILobbyProvider;
-        
-        private static Lobby _currentLobby;
+
+        private Lobby _currentLobby
+        {
+            get => _lobbyDataHolder.CurrentLobby;
+            set
+            {
+                _lobbyDataHolder.SetCurrentLobby(value);
+            }
+        }
+
         private Lobby _lastKnownState;
-        public static Lobby CurrentLobby => _currentLobby;
+        public Lobby CurrentLobby => _currentLobby;
+        private LobbyDataHolder _lobbyDataHolder;
 
         private void Awake()
         {
@@ -46,6 +55,18 @@ namespace PurrLobby
                 SetProvider(CurrentProvider);
             else
                 PurrLogger.LogWarning("No lobby provider assigned to LobbyManager.");
+
+            SetupDataHolder();
+        }
+
+        private void SetupDataHolder()
+        {
+            _lobbyDataHolder = FindFirstObjectByType<LobbyDataHolder>();
+            if (!_lobbyDataHolder)
+            {
+                var newObject = new GameObject("LobbyDataHolder");
+                _lobbyDataHolder = newObject.AddComponent<LobbyDataHolder>();
+            }
         }
 
         private void Update()
@@ -110,9 +131,12 @@ namespace PurrLobby
                 _lastKnownState = room;
                 _currentLobby = room;
                 OnRoomUpdated.Invoke(room);
-                
+
                 if (room.Members.TrueForAll(x => x.IsReady))
+                {
+                    _currentProvider.SetLobbyStartedAsync();
                     OnAllReady.Invoke();
+                }
             });
 
             _currentProvider.OnLobbyPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
