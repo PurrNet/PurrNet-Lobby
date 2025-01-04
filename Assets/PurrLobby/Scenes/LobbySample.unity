@@ -5273,6 +5273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 550dfcb93143f514c910a297ab2db28f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lobbyManager: {fileID: 1097043115}
   lobbyEntryPrefab: {fileID: 8034784290185517773, guid: e3910e62b256a2a46864060a999dd67e, type: 3}
   content: {fileID: 1771840637}
 --- !u!1 &2108945442

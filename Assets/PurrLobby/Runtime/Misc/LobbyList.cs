@@ -5,6 +5,7 @@ namespace PurrLobby
 {
     public class LobbyList : MonoBehaviour
     {
+        [SerializeField] private LobbyManager lobbyManager;
         [SerializeField] private LobbyEntry lobbyEntryPrefab;
         [SerializeField] private Transform content;
 
@@ -16,7 +17,7 @@ namespace PurrLobby
             foreach (var room in rooms)
             {
                 var entry = Instantiate(lobbyEntryPrefab, content);
-                entry.Init(room);
+                entry.Init(room, lobbyManager);
             }
         }
     }
