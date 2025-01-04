@@ -46,8 +46,7 @@ namespace PurrLobby
                     continue;
 
                 var entry = Instantiate(memberEntryPrefab, content);
-                entry.Init(member.Id, member.DisplayName, member.Avatar);
-                entry.SetReady(member.IsReady);
+                entry.Init(member);
             }
         }
 

@@ -14,12 +14,13 @@ namespace PurrLobby
         private string _memberId;
         public string MemberId => _memberId;
 
-        public void Init(string id, string username, Texture2D texture)
+        public void Init(LobbyUser user)
         {
             _defaultColor = userName.color;
-            _memberId = id;
-            avatar.texture = texture;
-            userName.text = username;
+            _memberId = user.Id;
+            avatar.texture = user.Avatar;
+            userName.text = user.DisplayName;
+            SetReady(user.IsReady);
         }
         
         public void SetReady(bool isReady)
