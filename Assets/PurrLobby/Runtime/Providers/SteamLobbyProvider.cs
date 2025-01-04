@@ -528,6 +528,26 @@ namespace PurrLobby.Providers
 
             return users;
         }
+        
+        private void OnApplicationQuit()
+        {
+            LeaveRoomIfInLobby();
+        }
+
+        private void OnDestroy()
+        {
+            LeaveRoomIfInLobby();
+        }
+
+        private void LeaveRoomIfInLobby()
+        {
+            if (_currentLobby.m_SteamID != 0) // Check if the player is in a room
+            {
+                SteamMatchmaking.LeaveLobby(_currentLobby);
+                _currentLobby = default;
+                Debug.Log("Left the lobby as the application stopped.");
+            }
+        }
 #endif
     }
 }
