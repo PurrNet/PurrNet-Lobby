@@ -338,59 +338,45 @@ namespace PurrLobby.Providers
             var tcs = new TaskCompletionSource<List<LobbyRoom>>();
             var results = new List<LobbyRoom>();
 
+            if (filters != null)
+            {
+                foreach (var filter in filters)
+                {
+                    SteamMatchmaking.AddRequestLobbyListStringFilter(filter.Key, filter.Value, ELobbyComparison.k_ELobbyComparisonEqual);
+                }
+            }
+
+            SteamMatchmaking.AddRequestLobbyListResultCountFilter(maxRoomsToFind);
+
             void OnLobbiesMatching(LobbyMatchList_t result, bool ioFailure)
             {
                 int totalLobbies = (int)result.m_nLobbiesMatching;
+                Debug.Log($"Found lobbies: {totalLobbies}");
 
                 for (int i = 0; i < totalLobbies; i++)
                 {
                     var lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
-                    var roomProperties = new Dictionary<string, string>();
-                    bool match = true;
+                    var roomProperties = GetLobbyProperties(lobbyId);
+                    int maxPlayers = SteamMatchmaking.GetLobbyMemberLimit(lobbyId);
 
-                    if (filters != null)
+                    results.Add(new LobbyRoom
                     {
-                        foreach (var filter in filters)
-                        {
-                            string value = SteamMatchmaking.GetLobbyData(lobbyId, filter.Key);
-                            if (value != filter.Value)
-                            {
-                                match = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (match)
-                    {
-                        int maxPlayers = SteamMatchmaking.GetLobbyMemberLimit(lobbyId);
-                        if (filters != null)
-                        {
-                            foreach (var key in filters.Keys)
-                            {
-                                roomProperties[key] = SteamMatchmaking.GetLobbyData(lobbyId, key);
-                            }
-                        }
-
-                        results.Add(new LobbyRoom
-                        {
-                            Name = SteamMatchmaking.GetLobbyData(lobbyId, "Name"),
-                            IsValid = true,
-                            RoomId = lobbyId.m_SteamID.ToString(),
-                            MaxPlayers = maxPlayers,
-                            Properties = roomProperties,
-                            Members = GetLobbyUsers(lobbyId)
-                        });
-                    }
+                        Name = SteamMatchmaking.GetLobbyData(lobbyId, "Name"),
+                        IsValid = true,
+                        RoomId = lobbyId.m_SteamID.ToString(),
+                        MaxPlayers = maxPlayers,
+                        Properties = roomProperties,
+                        Members = GetLobbyUsers(lobbyId)
+                    });
                 }
 
-                var limitedResults = results.Take(maxRoomsToFind).ToList();
-                tcs.TrySetResult(limitedResults);
+                tcs.TrySetResult(results);
             }
 
             var callResult = CallResult<LobbyMatchList_t>.Create(OnLobbiesMatching);
             SteamMatchmaking.RequestLobbyList();
-            callResult.Set(SteamMatchmaking.RequestLobbyList());
+            //callResult.Set(SteamMatchmaking.RequestLobbyList());
+
             return await tcs.Task;
         }
         
@@ -546,22 +532,21 @@ namespace PurrLobby.Providers
 
             for (int i = 0; i < propertyCount; i++)
             {
-                int keyBufferSize = 256;
-                int valueBufferSize = 256;
+                string key = string.Empty;
+                string value = string.Empty;
+                int keySize = 256;
+                int valueSize = 256;
 
-                string key = new string('\0', keyBufferSize);
-                string value = new string('\0', valueBufferSize);
-
-                bool result = SteamMatchmaking.GetLobbyDataByIndex(
+                bool success = SteamMatchmaking.GetLobbyDataByIndex(
                     lobbyId, 
                     i, 
                     out key, 
-                    keyBufferSize, 
+                    keySize, 
                     out value, 
-                    valueBufferSize
+                    valueSize
                 );
 
-                if (result)
+                if (success)
                 {
                     key = key.TrimEnd('\0');
                     value = value.TrimEnd('\0');
