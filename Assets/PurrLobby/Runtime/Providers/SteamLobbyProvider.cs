@@ -374,8 +374,7 @@ namespace PurrLobby.Providers
             }
 
             var callResult = CallResult<LobbyMatchList_t>.Create(OnLobbiesMatching);
-            SteamMatchmaking.RequestLobbyList();
-            //callResult.Set(SteamMatchmaking.RequestLobbyList());
+            callResult.Set(SteamMatchmaking.RequestLobbyList());
 
             return await tcs.Task;
         }
