@@ -52,7 +52,6 @@ namespace PurrLobby
 
         private void Update()
         {
-            // Process delayed actions
             while (_delayedActions.Count > 0)
             {
                 _delayedActions.Dequeue()?.Invoke();

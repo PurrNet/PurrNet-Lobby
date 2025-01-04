@@ -340,10 +340,9 @@ namespace PurrLobby.Providers
 
             void OnLobbiesMatching(LobbyMatchList_t result, bool ioFailure)
             {
-                int count = (int)result.m_nLobbiesMatching;
-                count = Math.Min(count, maxRoomsToFind);
+                int totalLobbies = (int)result.m_nLobbiesMatching;
 
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < totalLobbies; i++)
                 {
                     var lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
                     var roomProperties = new Dictionary<string, string>();
@@ -375,7 +374,7 @@ namespace PurrLobby.Providers
 
                         results.Add(new LobbyRoom
                         {
-                            Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
+                            Name = SteamMatchmaking.GetLobbyData(lobbyId, "Name"),
                             IsValid = true,
                             RoomId = lobbyId.m_SteamID.ToString(),
                             MaxPlayers = maxPlayers,
@@ -384,7 +383,9 @@ namespace PurrLobby.Providers
                         });
                     }
                 }
-                tcs.TrySetResult(results);
+
+                var limitedResults = results.Take(maxRoomsToFind).ToList();
+                tcs.TrySetResult(limitedResults);
             }
 
             var callResult = CallResult<LobbyMatchList_t>.Create(OnLobbiesMatching);
