@@ -27,8 +27,9 @@ namespace PurrLobby
         public UnityEvent<string> OnRoomJoinFailed = new UnityEvent<string>();
         public UnityEvent OnRoomLeft = new UnityEvent();
         public UnityEvent<LobbyRoom> OnRoomUpdated = new UnityEvent<LobbyRoom>();
-        public UnityEvent<IEnumerable<LobbyUser>> OnPlayerListUpdated = new UnityEvent<IEnumerable<LobbyUser>>();
+        public UnityEvent<List<LobbyUser>> OnPlayerListUpdated = new UnityEvent<List<LobbyUser>>();
         public UnityEvent<List<LobbyRoom>> OnRoomSearchResults = new UnityEvent<List<LobbyRoom>>();
+        public UnityEvent<List<FriendUser>> OnFriendListPulled = new UnityEvent<List<FriendUser>>();
         public UnityEvent<string> OnError = new UnityEvent<string>();
 
         public UnityEvent onInitialized = new UnityEvent();
@@ -114,7 +115,7 @@ namespace PurrLobby
                 OnRoomUpdated.Invoke(room);
             });
 
-            _currentProvider.OnPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
+            _currentProvider.OnLobbyPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError += error => InvokeDelayed(() => OnError.Invoke(error));
             
             _currentProvider.OnRoomUpdated += room =>
@@ -135,7 +136,7 @@ namespace PurrLobby
             _currentProvider.OnRoomJoinFailed -= message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
             _currentProvider.OnRoomLeft -= () => InvokeDelayed(() => OnRoomLeft.Invoke());
             _currentProvider.OnRoomUpdated -= room => InvokeDelayed(() => OnRoomUpdated.Invoke(room));
-            _currentProvider.OnPlayerListUpdated -= players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
+            _currentProvider.OnLobbyPlayerListUpdated -= players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError -= error => InvokeDelayed(() => OnError.Invoke(error));
 
             // ReSharper disable once EventUnsubscriptionViaAnonymousDelegate
@@ -155,17 +156,17 @@ namespace PurrLobby
             onShutdown?.Invoke();
         }
 
-        public void GetFriends()
+        public void PullFriends()
         {
             RunTask(async () =>
             {
                 EnsureProviderSet();
                 var friends = await _currentProvider.GetFriendsAsync();
-                OnPlayerListUpdated?.Invoke(friends);
+                OnFriendListPulled?.Invoke(friends);
             });
         }
 
-        public void InviteFriend(LobbyUser user)
+        public void InviteFriend(FriendUser user)
         {
             RunTask(async () =>
             {

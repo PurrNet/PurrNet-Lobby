@@ -11,10 +11,10 @@ namespace PurrLobby
         void Shutdown();
 
         // Friend List
-        Task<IEnumerable<LobbyUser>> GetFriendsAsync();
+        Task<List<FriendUser>> GetFriendsAsync();
         
         // Invitations
-        Task InviteFriendAsync(LobbyUser user);
+        Task InviteFriendAsync(FriendUser user);
         Task AcceptInviteAsync(string inviteId);
         Task DeclineInviteAsync(string inviteId);
 
@@ -34,7 +34,8 @@ namespace PurrLobby
         event UnityAction<string> OnRoomJoinFailed;
         event UnityAction OnRoomLeft;
         event UnityAction<LobbyRoom> OnRoomUpdated;
-        event UnityAction<IEnumerable<LobbyUser>> OnPlayerListUpdated;
+        event UnityAction<List<LobbyUser>> OnLobbyPlayerListUpdated;
+        event UnityAction<List<FriendUser>> OnFriendListPulled;
 
         // Error Handling
         event UnityAction<string> OnError;

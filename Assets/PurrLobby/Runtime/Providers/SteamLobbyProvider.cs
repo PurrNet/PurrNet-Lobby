@@ -34,7 +34,8 @@ namespace PurrLobby.Providers
         public event UnityAction<string> OnRoomJoinFailed;
         public event UnityAction OnRoomLeft;
         public event UnityAction<LobbyRoom> OnRoomUpdated;
-        public event UnityAction<IEnumerable<LobbyUser>> OnPlayerListUpdated;
+        public event UnityAction<List<LobbyUser>> OnLobbyPlayerListUpdated;
+        public event UnityAction<List<FriendUser>> OnFriendListPulled;
         public event UnityAction<string> OnError;
 
         [SerializeField] private bool handleSteamInit = false;
@@ -46,6 +47,7 @@ namespace PurrLobby.Providers
         private Callback<LobbyDataUpdate_t> _lobbyDataUpdateCallback;
         private Callback<AvatarImageLoaded_t> _avatarImageLoadedCallback;
         private Callback<LobbyChatUpdate_t> _lobbyChatUpdateCallback;
+        private Callback<GameLobbyJoinRequested_t> _gameLobbyJoinRequestedCallback;
 
         public async Task InitializeAsync()
         {
@@ -65,6 +67,7 @@ namespace PurrLobby.Providers
             _avatarImageLoadedCallback = Callback<AvatarImageLoaded_t>.Create(OnAvatarImageLoaded);
             _lobbyDataUpdateCallback = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
             _lobbyChatUpdateCallback = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
+            _gameLobbyJoinRequestedCallback = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
 
             int retries = 100;
             while (retries > 0)
@@ -168,22 +171,17 @@ namespace PurrLobby.Providers
             }
         }
 
-        public async Task<IEnumerable<LobbyUser>> GetFriendsAsync()
+        public async Task<List<FriendUser>> GetFriendsAsync()
         {
             if (!_initialized) return null;
 
-            var friends = new List<LobbyUser>();
+            var friends = new List<FriendUser>();
             int friendCount = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagImmediate);
 
             for (int i = 0; i < friendCount; i++)
             {
                 var steamID = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
-                friends.Add(new LobbyUser
-                {
-                    Id = steamID.m_SteamID.ToString(),
-                    DisplayName = SteamFriends.GetFriendPersonaName(steamID),
-                    IsReady = false
-                });
+                friends.Add(CreateFriendUser(steamID));
             }
 
             return friends;
@@ -212,12 +210,13 @@ namespace PurrLobby.Providers
             return GetLobbyUsers(SteamUser.GetSteamID());
         }
 
-        public async Task InviteFriendAsync(LobbyUser user)
+        public async Task InviteFriendAsync(FriendUser user)
         {
             if (!_initialized) return;
 
             var steamID = new CSteamID(ulong.Parse(user.Id));
-            SteamMatchmaking.InviteUserToLobby(SteamUser.GetSteamID(), steamID);
+            //Debug.Log($"Inviting: Steam ID: {steamID} | Friend ID: {user.Id} | Name: {user.DisplayName}");
+            SteamMatchmaking.InviteUserToLobby(_currentLobby, steamID);
         }
 
         public async Task AcceptInviteAsync(string inviteId)
@@ -228,6 +227,15 @@ namespace PurrLobby.Providers
         public async Task DeclineInviteAsync(string inviteId)
         {
             PurrLogger.Log($"Invite {inviteId} declined.");
+        }
+        
+        private void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)
+        {
+            var lobbyId = callback.m_steamIDLobby;
+            PurrLogger.Log($"Invite accepted. Joining lobby {lobbyId.m_SteamID}");
+
+            // Trigger the JoinRoom logic
+            _ = JoinRoomAsync(lobbyId.m_SteamID.ToString());
         }
 
         public async Task<LobbyRoom> CreateRoomAsync(int maxPlayers, Dictionary<string, string> roomProperties = null)
@@ -351,7 +359,6 @@ namespace PurrLobby.Providers
             void OnLobbiesMatching(LobbyMatchList_t result, bool ioFailure)
             {
                 int totalLobbies = (int)result.m_nLobbiesMatching;
-                Debug.Log($"Found lobbies: {totalLobbies}");
 
                 for (int i = 0; i < totalLobbies; i++)
                 {
@@ -405,6 +412,33 @@ namespace PurrLobby.Providers
                 Id = steamId.m_SteamID.ToString(),
                 DisplayName = displayName,
                 IsReady = isReady,
+                Avatar = avatar
+            };
+        }
+
+        private FriendUser CreateFriendUser(CSteamID steamId)
+        {
+            var displayName = SteamFriends.GetFriendPersonaName(steamId);
+
+            var avatarHandle = SteamFriends.GetLargeFriendAvatar(steamId);
+            Texture2D avatar = null;
+
+            if (avatarHandle != -1 && SteamUtils.GetImageSize(avatarHandle, out uint width, out uint height))
+            {
+                byte[] imageBuffer = new byte[width * height * 4];
+                if (SteamUtils.GetImageRGBA(avatarHandle, imageBuffer, imageBuffer.Length))
+                {
+                    avatar = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
+                    avatar.LoadRawTextureData(imageBuffer);
+                    FlipTextureVertically(avatar);
+                    avatar.Apply();
+                }
+            }
+
+            return new FriendUser()
+            {
+                Id = steamId.m_SteamID.ToString(),
+                DisplayName = displayName,
                 Avatar = avatar
             };
         }
