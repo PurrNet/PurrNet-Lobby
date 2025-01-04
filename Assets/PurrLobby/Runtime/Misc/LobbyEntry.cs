@@ -10,7 +10,7 @@ namespace PurrLobby
         
         public void Init(LobbyRoom room)
         {
-            lobbyNameText.text = room.Name;
+            lobbyNameText.text = room.Name.Length > 0 ? room.Name : room.RoomId;
             playersText.text = $"{room.Members.Count}/{room.MaxPlayers}";
         }
     }

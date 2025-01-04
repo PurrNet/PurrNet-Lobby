@@ -104,17 +104,41 @@ namespace PurrLobby.Providers
                 return;
 
             var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
-            OnPlayerListUpdated?.Invoke(updatedLobbyUsers);
+            var updatedProperties = new Dictionary<string, string>();
 
-            var updatedRoom = new LobbyRoom
+            int propertyCount = SteamMatchmaking.GetLobbyDataCount(_currentLobby);
+            for (int i = 0; i < propertyCount; i++)
             {
-                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
-                IsValid = true,
-                RoomId = _currentLobby.m_SteamID.ToString(),
-                MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
-                Properties = new Dictionary<string, string>(), // Populate as needed
-                Members = updatedLobbyUsers
-            };
+                int keyBufferSize = 256;
+                int valueBufferSize = 256;
+
+                string key = new string('\0', keyBufferSize);
+                string value = new string('\0', valueBufferSize);
+
+                bool result = SteamMatchmaking.GetLobbyDataByIndex(
+                    _currentLobby, 
+                    i, 
+                    out key, 
+                    keyBufferSize, 
+                    out value, 
+                    valueBufferSize
+                );
+
+                if (result)
+                {
+                    key = key.TrimEnd('\0');
+                    value = value.TrimEnd('\0');
+                    updatedProperties[key] = value;
+                }
+            }
+
+            var updatedRoom = LobbyRoomFactory.Create(
+                SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
+                _currentLobby.m_SteamID.ToString(),
+                SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                updatedLobbyUsers,
+                updatedProperties
+            );
 
             OnRoomUpdated?.Invoke(updatedRoom);
         }
@@ -229,15 +253,13 @@ namespace PurrLobby.Providers
                 }
             }
 
-            return new LobbyRoom
-            {
-                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
-                IsValid = true,
-                RoomId = lobbyId.m_SteamID.ToString(),
-                MaxPlayers = maxPlayers,
-                Properties = roomProperties ?? new Dictionary<string, string>(),
-                Members = GetLobbyUsers(lobbyId)
-            };
+            return LobbyRoomFactory.Create(
+                SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
+                lobbyId.m_SteamID.ToString(),
+                maxPlayers,
+                GetLobbyUsers(lobbyId),
+                roomProperties
+            );
         }
         
         public async Task<LobbyRoom> JoinRoomAsync(string roomId)
@@ -269,16 +291,40 @@ namespace PurrLobby.Providers
                 OnRoomJoinFailed?.Invoke($"Failed to join lobby {roomId}.");
                 return new LobbyRoom { IsValid = false };
             }
-
-            var room = new LobbyRoom
+            
+            var roomProperties = new Dictionary<string, string>();
+            int propertyCount = SteamMatchmaking.GetLobbyDataCount(_currentLobby);
+            int keyBufferSize = 256;
+            int valueBufferSize = 256;
+            
+            for (int i = 0; i < propertyCount; i++)
             {
-                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
-                IsValid = true,
-                RoomId = roomId,
-                MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
-                Properties = new Dictionary<string, string>(),
-                Members = GetLobbyUsers(lobbyId)
-            };
+                string key = new string('\0', keyBufferSize);
+                string value = new string('\0', valueBufferSize);
+                bool result = SteamMatchmaking.GetLobbyDataByIndex(
+                    _currentLobby, 
+                    i, 
+                    out key, 
+                    keyBufferSize, 
+                    out value, 
+                    valueBufferSize
+                );
+
+                if (result)
+                {
+                    key = key.TrimEnd('\0');
+                    value = value.TrimEnd('\0');
+                    roomProperties[key] = value;
+                }
+            }
+
+            var room = LobbyRoomFactory.Create(
+                SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
+                roomId,
+                SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                GetLobbyUsers(lobbyId),
+                roomProperties
+            );
 
             OnRoomUpdated?.Invoke(room);
             return room;
