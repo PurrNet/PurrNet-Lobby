@@ -9,6 +9,7 @@ namespace PurrLobby
         [SerializeField] private LobbyManager lobbyManager;
         [SerializeField] private FriendEntry friendEntry;
         [SerializeField] private Transform content;
+        [SerializeField] private LobbyManager.FriendFilter filter;
 
         private float _lastUpdateTime;
 
@@ -26,10 +27,10 @@ namespace PurrLobby
 
         private void Update()
         {
-            if(_lastUpdateTime + 5f < Time.time)
+            if(_lastUpdateTime + 3f < Time.time)
             {
                 _lastUpdateTime = Time.time;
-                lobbyManager.PullFriends();
+                lobbyManager.PullFriends(filter);
             }
         }
     }

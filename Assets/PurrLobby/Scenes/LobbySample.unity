@@ -1540,6 +1540,7 @@ MonoBehaviour:
   lobbyManager: {fileID: 1097043115}
   friendEntry: {fileID: 1508615511672977223, guid: 701273401acb61842af8f9ea5bd0871b, type: 3}
   content: {fileID: 477276360}
+  filter: 0
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -2349,6 +2350,7 @@ GameObject:
   - component: {fileID: 1097043113}
   - component: {fileID: 1097043115}
   - component: {fileID: 1097043114}
+  - component: {fileID: 1097043116}
   m_Layer: 0
   m_Name: LobbyManager
   m_TagString: Untagged
@@ -2527,6 +2529,21 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  OnAllReady:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1097043116}
+        m_TargetAssemblyTypeName: PurrLobby.SceneSwitcher, PurrNetLobbySetup
+        m_MethodName: SwitchScene
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   OnError:
     m_PersistentCalls:
       m_Calls: []
@@ -2536,6 +2553,19 @@ MonoBehaviour:
   onShutdown:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1097043116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097043112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bffc99f43c7c4224b8dccb9831f662a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nextScene: NetworkedScene
 --- !u!1 &1101296062
 GameObject:
   m_ObjectHideFlags: 0
@@ -2864,7 +2894,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 43.4
+  m_fontSize: 45.45
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3017,7 +3047,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 97.25
+  m_fontSize: 92
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3206,7 +3236,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 90.55
+  m_fontSize: 86.95
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -4608,10 +4638,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1295349076}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.7025112}
+  m_AnchorMin: {x: 0, y: 0.72900003}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0.5}
+  m_SizeDelta: {x: 0, y: -0.99900055}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1834254290
 MonoBehaviour:
@@ -5500,7 +5530,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 34.55
+  m_fontSize: 36.3
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1

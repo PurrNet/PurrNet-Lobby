@@ -11,7 +11,7 @@ namespace PurrLobby
         void Shutdown();
 
         // Friend List
-        Task<List<FriendUser>> GetFriendsAsync();
+        Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter);
         
         // Invitations
         Task InviteFriendAsync(FriendUser user);

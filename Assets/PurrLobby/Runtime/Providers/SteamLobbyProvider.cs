@@ -171,7 +171,7 @@ namespace PurrLobby.Providers
             }
         }
 
-        public async Task<List<FriendUser>> GetFriendsAsync()
+        public async Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter)
         {
             if (!_initialized) return null;
 
@@ -181,7 +181,17 @@ namespace PurrLobby.Providers
             for (int i = 0; i < friendCount; i++)
             {
                 var steamID = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
-                friends.Add(CreateFriendUser(steamID));
+                bool shouldAdd = filter switch
+                {
+                    LobbyManager.FriendFilter.InThisGame => SteamFriends.GetFriendGamePlayed(steamID, out FriendGameInfo_t gameInfo) &&
+                                                            gameInfo.m_gameID.AppID() == SteamUtils.GetAppID(),
+                    LobbyManager.FriendFilter.Online => SteamFriends.GetFriendPersonaState(steamID) == EPersonaState.k_EPersonaStateOnline,
+                    LobbyManager.FriendFilter.All => true,
+                    _ => false
+                };
+
+                if (shouldAdd)
+                    friends.Add(CreateFriendUser(steamID));
             }
 
             return friends;
@@ -215,7 +225,7 @@ namespace PurrLobby.Providers
             if (!_initialized) return;
 
             var steamID = new CSteamID(ulong.Parse(user.Id));
-            //Debug.Log($"Inviting: Steam ID: {steamID} | Friend ID: {user.Id} | Name: {user.DisplayName}");
+            //PurrLogger.Log($"Inviting: Steam ID: {steamID} | Friend ID: {user.Id} | Name: {user.DisplayName}");
             SteamMatchmaking.InviteUserToLobby(_currentLobby, steamID);
         }
         
@@ -528,11 +538,6 @@ namespace PurrLobby.Providers
         }
         
         private void OnApplicationQuit()
-        {
-            LeaveLobbyIfInLobby();
-        }
-
-        private void OnDestroy()
         {
             LeaveLobbyIfInLobby();
         }

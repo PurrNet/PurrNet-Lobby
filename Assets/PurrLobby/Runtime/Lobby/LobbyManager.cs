@@ -19,9 +19,6 @@ namespace PurrLobby
         public SerializableDictionary<string, string> searchRoomArgs = new();
 
         // Events exposed by the manager
-        public UnityEvent<LobbyUser> OnInviteReceived = new UnityEvent<LobbyUser>();
-        public UnityEvent<string> OnInviteAccepted = new UnityEvent<string>();
-        public UnityEvent<string> OnInviteDeclined = new UnityEvent<string>();
         public UnityEvent<Lobby> OnRoomJoined = new UnityEvent<Lobby>();
         public UnityEvent<string> OnRoomJoinFailed = new UnityEvent<string>();
         public UnityEvent OnRoomLeft = new UnityEvent();
@@ -29,6 +26,7 @@ namespace PurrLobby
         public UnityEvent<List<LobbyUser>> OnPlayerListUpdated = new UnityEvent<List<LobbyUser>>();
         public UnityEvent<List<Lobby>> OnRoomSearchResults = new UnityEvent<List<Lobby>>();
         public UnityEvent<List<FriendUser>> OnFriendListPulled = new UnityEvent<List<FriendUser>>();
+        public UnityEvent OnAllReady = new UnityEvent();
         public UnityEvent<string> OnError = new UnityEvent<string>();
 
         public UnityEvent onInitialized = new UnityEvent();
@@ -36,9 +34,9 @@ namespace PurrLobby
 
         public ILobbyProvider CurrentProvider => currentProvider as ILobbyProvider;
         
-        private Lobby _currentLobby;
+        private static Lobby _currentLobby;
         private Lobby _lastKnownState;
-        public Lobby CurrentLobby => _currentLobby;
+        public static Lobby CurrentLobby => _currentLobby;
 
         private void Awake()
         {
@@ -112,6 +110,9 @@ namespace PurrLobby
                 _lastKnownState = room;
                 _currentLobby = room;
                 OnRoomUpdated.Invoke(room);
+                
+                if (room.Members.TrueForAll(x => x.IsReady))
+                    OnAllReady.Invoke();
             });
 
             _currentProvider.OnLobbyPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
@@ -158,12 +159,12 @@ namespace PurrLobby
         /// <summary>
         /// Prompts the provider to pull friends from the platform's friend list.
         /// </summary>
-        public void PullFriends()
+        public void PullFriends(FriendFilter filter)
         {
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                var friends = await _currentProvider.GetFriendsAsync();
+                var friends = await _currentProvider.GetFriendsAsync(filter);
                 OnFriendListPulled?.Invoke(friends);
             });
         }
@@ -342,6 +343,14 @@ namespace PurrLobby
         {
             public int maxPlayers = 5;
             public SerializableDictionary<string, string> roomProperties = null;
+        }
+        
+        [System.Serializable]
+        public enum FriendFilter
+        {
+            InThisGame,
+            Online,
+            All
         }
     }
 }
