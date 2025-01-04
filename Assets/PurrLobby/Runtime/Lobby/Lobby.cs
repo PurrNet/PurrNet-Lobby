@@ -2,25 +2,25 @@ using System.Collections.Generic;
 
 namespace PurrLobby
 {
-    public struct LobbyRoom
+    public struct Lobby
     {
         public string Name;
         public bool IsValid;
-        public string RoomId;
+        public string lobbyId;
         public int MaxPlayers;
         public Dictionary<string, string> Properties;
         public List<LobbyUser> Members;
     }
     
-    public static class LobbyRoomFactory
+    public static class LobbyFactory
     {
-        public static LobbyRoom Create(string name, string roomId, int maxPlayers, List<LobbyUser> members, Dictionary<string, string> properties)
+        public static Lobby Create(string name, string lobbyId, int maxPlayers, List<LobbyUser> members, Dictionary<string, string> properties)
         {
-            return new LobbyRoom
+            return new Lobby
             {
                 Name = name,
                 IsValid = true,
-                RoomId = roomId,
+                lobbyId = lobbyId,
                 MaxPlayers = maxPlayers,
                 Properties = properties ?? new Dictionary<string, string>(),
                 Members = members

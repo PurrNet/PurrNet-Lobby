@@ -19,7 +19,7 @@ namespace PurrLobby
             }
             
             onStartJoin?.Invoke();
-            lobbyManager.JoinRoom(roomIdInput.text);
+            lobbyManager.JoinLobby(roomIdInput.text);
         }
     }
 }

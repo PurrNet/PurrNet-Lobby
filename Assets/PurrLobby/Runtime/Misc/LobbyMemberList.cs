@@ -10,7 +10,7 @@ namespace PurrLobby
         [SerializeField] private MemberEntry memberEntryPrefab;
         [SerializeField] private Transform content;
 
-        public void LobbyDataUpdate(LobbyRoom room)
+        public void LobbyDataUpdate(Lobby room)
         {
             if(!room.IsValid)
                 return;
@@ -26,7 +26,7 @@ namespace PurrLobby
                 Destroy(child.gameObject);
         }
 
-        private void HandleExistingMembers(LobbyRoom room)
+        private void HandleExistingMembers(Lobby room)
         {
             foreach (Transform child in content)
             {
@@ -41,7 +41,7 @@ namespace PurrLobby
             }
         }
 
-        private void HandleNewMembers(LobbyRoom room)
+        private void HandleNewMembers(Lobby room)
         {
             var existingMembers = content.GetComponentsInChildren<MemberEntry>();
     
@@ -55,7 +55,7 @@ namespace PurrLobby
             }
         }
 
-        private void HandleLeftMembers(LobbyRoom room)
+        private void HandleLeftMembers(Lobby room)
         {
             var childrenToRemove = new List<Transform>();
 

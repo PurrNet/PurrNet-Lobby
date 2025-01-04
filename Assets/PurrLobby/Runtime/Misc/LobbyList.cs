@@ -10,7 +10,7 @@ namespace PurrLobby
         [SerializeField] private LobbyEntry lobbyEntryPrefab;
         [SerializeField] private Transform content;
 
-        public void Populate(List<LobbyRoom> rooms)
+        public void Populate(List<Lobby> rooms)
         {
             foreach (Transform child in content)
                 Destroy(child.gameObject);

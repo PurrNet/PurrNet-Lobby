@@ -9,7 +9,7 @@ namespace PurrLobby
 
         public override void OnShow()
         {
-            lobbyManager.SearchRooms();
+            lobbyManager.SearchLobbies();
         }
     }
 }

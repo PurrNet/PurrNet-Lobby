@@ -5,7 +5,6 @@ using PurrNet;
 using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace PurrLobby
 {
@@ -23,12 +22,12 @@ namespace PurrLobby
         public UnityEvent<LobbyUser> OnInviteReceived = new UnityEvent<LobbyUser>();
         public UnityEvent<string> OnInviteAccepted = new UnityEvent<string>();
         public UnityEvent<string> OnInviteDeclined = new UnityEvent<string>();
-        public UnityEvent<LobbyRoom> OnRoomJoined = new UnityEvent<LobbyRoom>();
+        public UnityEvent<Lobby> OnRoomJoined = new UnityEvent<Lobby>();
         public UnityEvent<string> OnRoomJoinFailed = new UnityEvent<string>();
         public UnityEvent OnRoomLeft = new UnityEvent();
-        public UnityEvent<LobbyRoom> OnRoomUpdated = new UnityEvent<LobbyRoom>();
+        public UnityEvent<Lobby> OnRoomUpdated = new UnityEvent<Lobby>();
         public UnityEvent<List<LobbyUser>> OnPlayerListUpdated = new UnityEvent<List<LobbyUser>>();
-        public UnityEvent<List<LobbyRoom>> OnRoomSearchResults = new UnityEvent<List<LobbyRoom>>();
+        public UnityEvent<List<Lobby>> OnRoomSearchResults = new UnityEvent<List<Lobby>>();
         public UnityEvent<List<FriendUser>> OnFriendListPulled = new UnityEvent<List<FriendUser>>();
         public UnityEvent<string> OnError = new UnityEvent<string>();
 
@@ -37,13 +36,13 @@ namespace PurrLobby
 
         public ILobbyProvider CurrentProvider => currentProvider as ILobbyProvider;
         
-        private LobbyRoom _currentLobby;
-        private LobbyRoom _lastKnownRoomState;
-        public LobbyRoom CurrentLobby => _currentLobby;
+        private Lobby _currentLobby;
+        private Lobby _lastKnownState;
+        public Lobby CurrentLobby => _currentLobby;
 
         private void Awake()
         {
-            _lastKnownRoomState = new LobbyRoom { IsValid = false };
+            _lastKnownState = new Lobby { IsValid = false };
 
             if (CurrentProvider != null)
                 SetProvider(CurrentProvider);
@@ -71,7 +70,10 @@ namespace PurrLobby
             }
         }
 
-        // Set or switch the current provider
+        /// <summary>
+        /// Set or switch the current provider
+        /// </summary>
+        /// <param name="provider"></param>
         public void SetProvider(ILobbyProvider provider)
         {
             if (_currentProvider != null)
@@ -96,21 +98,18 @@ namespace PurrLobby
         // Subscribe to provider events
         private void SubscribeToProviderEvents()
         {
-            _currentProvider.OnInviteReceived += user => InvokeDelayed(() => OnInviteReceived.Invoke(user));
-            _currentProvider.OnInviteAccepted += inviteId => InvokeDelayed(() => OnInviteAccepted.Invoke(inviteId));
-            _currentProvider.OnInviteDeclined += inviteId => InvokeDelayed(() => OnInviteDeclined.Invoke(inviteId));
-            _currentProvider.OnRoomJoinFailed += message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
-            _currentProvider.OnRoomLeft += () => InvokeDelayed(() =>
+            _currentProvider.OnLobbyJoinFailed += message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
+            _currentProvider.OnLobbyLeft += () => InvokeDelayed(() =>
             {
                 _currentLobby = default;
                 OnRoomLeft.Invoke();
             });
             
-            _currentProvider.OnRoomUpdated += room => InvokeDelayed(() =>
+            _currentProvider.OnLobbyUpdated += room => InvokeDelayed(() =>
             {
                 if (!HasRoomStateChanged(room)) return;
 
-                _lastKnownRoomState = room;
+                _lastKnownState = room;
                 _currentLobby = room;
                 OnRoomUpdated.Invoke(room);
             });
@@ -118,7 +117,7 @@ namespace PurrLobby
             _currentProvider.OnLobbyPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError += error => InvokeDelayed(() => OnError.Invoke(error));
             
-            _currentProvider.OnRoomUpdated += room =>
+            _currentProvider.OnLobbyUpdated += room =>
             {
                 if (room.IsValid)
                 {
@@ -130,17 +129,14 @@ namespace PurrLobby
         // Unsubscribe from provider events
         private void UnsubscribeFromProviderEvents()
         {
-            _currentProvider.OnInviteReceived -= user => InvokeDelayed(() => OnInviteReceived.Invoke(user));
-            _currentProvider.OnInviteAccepted -= inviteId => InvokeDelayed(() => OnInviteAccepted.Invoke(inviteId));
-            _currentProvider.OnInviteDeclined -= inviteId => InvokeDelayed(() => OnInviteDeclined.Invoke(inviteId));
-            _currentProvider.OnRoomJoinFailed -= message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
-            _currentProvider.OnRoomLeft -= () => InvokeDelayed(() => OnRoomLeft.Invoke());
-            _currentProvider.OnRoomUpdated -= room => InvokeDelayed(() => OnRoomUpdated.Invoke(room));
+            _currentProvider.OnLobbyJoinFailed -= message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
+            _currentProvider.OnLobbyLeft -= () => InvokeDelayed(() => OnRoomLeft.Invoke());
+            _currentProvider.OnLobbyUpdated -= room => InvokeDelayed(() => OnRoomUpdated.Invoke(room));
             _currentProvider.OnLobbyPlayerListUpdated -= players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError -= error => InvokeDelayed(() => OnError.Invoke(error));
 
             // ReSharper disable once EventUnsubscriptionViaAnonymousDelegate
-            _currentProvider.OnRoomUpdated -= room =>
+            _currentProvider.OnLobbyUpdated -= room =>
             {
                 if (room.IsValid)
                 {
@@ -149,6 +145,9 @@ namespace PurrLobby
             };
         }
 
+        /// <summary>
+        /// Shuts down and clears the current provider
+        /// </summary>
         public void Shutdown()
         {
             EnsureProviderSet();
@@ -156,6 +155,9 @@ namespace PurrLobby
             onShutdown?.Invoke();
         }
 
+        /// <summary>
+        /// Prompts the provider to pull friends from the platform's friend list.
+        /// </summary>
         public void PullFriends()
         {
             RunTask(async () =>
@@ -166,30 +168,16 @@ namespace PurrLobby
             });
         }
 
+        /// <summary>
+        /// Invite the given user to the current lobby.
+        /// </summary>
+        /// <param name="user"></param>
         public void InviteFriend(FriendUser user)
         {
             RunTask(async () =>
             {
                 EnsureProviderSet();
                 await _currentProvider.InviteFriendAsync(user);
-            });
-        }
-
-        public void AcceptInvite(string inviteId)
-        {
-            RunTask(async () =>
-            {
-                EnsureProviderSet();
-                await _currentProvider.AcceptInviteAsync(inviteId);
-            });
-        }
-
-        public void DeclineInvite(string inviteId)
-        {
-            RunTask(async () =>
-            {
-                EnsureProviderSet();
-                await _currentProvider.DeclineInviteAsync(inviteId);
             });
         }
 
@@ -209,23 +197,30 @@ namespace PurrLobby
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                var room = await _currentProvider.CreateRoomAsync(maxPlayers, roomProperties);
+                var room = await _currentProvider.CreateLobbyAsync(maxPlayers, roomProperties);
                 _currentLobby = room;
                 OnRoomUpdated?.Invoke(room);
             });
         }
 
-        public void LeaveRoom()
+        /// <summary>
+        /// Leave the lobby
+        /// </summary>
+        public void LeaveLobby()
         {
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                await _currentProvider.LeaveRoomAsync();
+                await _currentProvider.LeaveLobbyAsync();
                 OnRoomLeft?.Invoke();
             });
         }
 
-        public void JoinRoom(string roomId)
+        /// <summary>
+        /// Join the lobby with the given ID
+        /// </summary>
+        /// <param name="roomId">ID of the lobby to join</param>
+        public void JoinLobby(string roomId)
         {
             if (string.IsNullOrEmpty(roomId))
             {
@@ -236,7 +231,7 @@ namespace PurrLobby
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                var room = await _currentProvider.JoinRoomAsync(roomId);
+                var room = await _currentProvider.JoinLobbyAsync(roomId);
                 if (room.IsValid)
                 {
                     OnRoomJoined?.Invoke(room);
@@ -248,7 +243,12 @@ namespace PurrLobby
             });
         }
 
-        public void SearchRooms(int maxRoomsToFind = 10, Dictionary<string, string> filters = null)
+        /// <summary>
+        /// Prompts the provider to search lobbies with given filters
+        /// </summary>
+        /// <param name="maxRoomsToFind">Max amount of rooms to find</param>
+        /// <param name="filters">Filters to use for search - only works if the provider supports it</param>
+        public void SearchLobbies(int maxRoomsToFind = 10, Dictionary<string, string> filters = null)
         {
             if(filters == null)
                 filters = searchRoomArgs.ToDictionary();
@@ -256,11 +256,16 @@ namespace PurrLobby
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                var rooms = await _currentProvider.SearchRoomsAsync(maxRoomsToFind, filters);
+                var rooms = await _currentProvider.SearchLobbiesAsync(maxRoomsToFind, filters);
                 OnRoomSearchResults?.Invoke(rooms);
             });
         }
         
+        /// <summary>
+        /// Set's the given User to Ready
+        /// </summary>
+        /// <param name="userId">User ID of player</param>
+        /// <param name="isReady">Ready state to set</param>
         public void SetIsReady(string userId, bool isReady)
         {
             RunTask(async () =>
@@ -270,6 +275,9 @@ namespace PurrLobby
             });
         }
 
+        /// <summary>
+        /// Toggles the local users ready state automatically
+        /// </summary>
         public void ToggleLocalReady()
         {
             if (!_currentLobby.IsValid)
@@ -312,15 +320,15 @@ namespace PurrLobby
                 throw new InvalidOperationException("No lobby provider has been set.");
         }
         
-        private bool HasRoomStateChanged(LobbyRoom newRoom)
+        private bool HasRoomStateChanged(Lobby @new)
         {
-            if (!_lastKnownRoomState.IsValid || newRoom.Name != _lastKnownRoomState.Name || newRoom.RoomId != _lastKnownRoomState.RoomId || newRoom.Members.Count != _lastKnownRoomState.Members.Count || newRoom.Properties.Count != _lastKnownRoomState.Properties.Count)
+            if (!_lastKnownState.IsValid || @new.Name != _lastKnownState.Name || @new.lobbyId != _lastKnownState.lobbyId || @new.Members.Count != _lastKnownState.Members.Count || @new.Properties.Count != _lastKnownState.Properties.Count)
                 return true;
 
-            for (int i = 0; i < newRoom.Members.Count; i++)
+            for (int i = 0; i < @new.Members.Count; i++)
             {
-                var newMember = newRoom.Members[i];
-                var oldMember = _lastKnownRoomState.Members[i];
+                var newMember = @new.Members[i];
+                var oldMember = _lastKnownState.Members[i];
 
                 if (newMember.Id != oldMember.Id || newMember.IsReady != oldMember.IsReady || newMember.DisplayName != oldMember.DisplayName || newMember.Avatar != oldMember.Avatar)
                     return true;

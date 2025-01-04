@@ -4007,7 +4007,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1097043115}
         m_TargetAssemblyTypeName: PurrLobby.LobbyManager, PurrNetLobbySetup
-        m_MethodName: LeaveRoom
+        m_MethodName: LeaveLobby
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

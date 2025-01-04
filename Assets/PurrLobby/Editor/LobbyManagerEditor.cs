@@ -160,7 +160,7 @@ namespace PurrLobby.Editor
 
             if (currentRoom.IsValid)
             {
-                EditorGUILayout.LabelField("Room ID:", currentRoom.RoomId);
+                EditorGUILayout.LabelField("Room ID:", currentRoom.lobbyId);
                 EditorGUILayout.LabelField("Max Players:", currentRoom.MaxPlayers.ToString());
                 EditorGUILayout.LabelField("Room Properties:");
                 foreach (var property in currentRoom.Properties)
