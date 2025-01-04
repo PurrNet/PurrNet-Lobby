@@ -1961,7 +1961,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.36965442, y: 0.16900001}
   m_AnchorMax: {x: 0.6313563, y: 0.37382478}
-  m_AnchoredPosition: {x: 0.00012207031, y: -0.5}
+  m_AnchoredPosition: {x: 0.00012207031, y: -0.49996948}
   m_SizeDelta: {x: 0, y: -4.8530006}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1025945784
@@ -2415,15 +2415,6 @@ MonoBehaviour:
     - IsTheBest
     stringKeys: []
     stringValues: []
-  OnInviteReceived:
-    m_PersistentCalls:
-      m_Calls: []
-  OnInviteAccepted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnInviteDeclined:
-    m_PersistentCalls:
-      m_Calls: []
   OnRoomJoined:
     m_PersistentCalls:
       m_Calls:
@@ -2565,6 +2556,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bffc99f43c7c4224b8dccb9831f662a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lobbyManager: {fileID: 1097043115}
   nextScene: NetworkedScene
 --- !u!1 &1101296062
 GameObject:
@@ -2894,7 +2886,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 45.45
+  m_fontSize: 39.2
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2979,10 +2971,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1101296063}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.9501953, y: -2.0897217}
-  m_SizeDelta: {x: -968.795, y: -870.253}
+  m_AnchorMin: {x: 0.22669359, y: 0.38555846}
+  m_AnchorMax: {x: 0.7751774, y: 0.6072244}
+  m_AnchoredPosition: {x: -1.0498047, y: 1.4103088}
+  m_SizeDelta: {x: -4.794983, y: -1.2150269}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1169014233
 MonoBehaviour:
@@ -3047,7 +3039,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 92
+  m_fontSize: 100
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3168,10 +3160,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 210951983}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.9501953, y: -2.0897217}
-  m_SizeDelta: {x: -968.795, y: -870.253}
+  m_AnchorMin: {x: 0.2414873, y: 0.38946795}
+  m_AnchorMax: {x: 0.761489, y: 0.60240436}
+  m_AnchoredPosition: {x: -2.0496826, y: 1.4103394}
+  m_SizeDelta: {x: -4.794899, y: -0.8588028}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1229674653
 MonoBehaviour:
@@ -3236,7 +3228,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 86.95
+  m_fontSize: 100
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -5530,7 +5522,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36.3
+  m_fontSize: 30.9
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1

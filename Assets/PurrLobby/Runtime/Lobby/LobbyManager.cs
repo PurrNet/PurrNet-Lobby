@@ -134,7 +134,6 @@ namespace PurrLobby
 
                 if (room.Members.TrueForAll(x => x.IsReady))
                 {
-                    _currentProvider.SetLobbyStartedAsync();
                     OnAllReady.Invoke();
                 }
             });
@@ -360,6 +359,11 @@ namespace PurrLobby
             }
 
             return false;
+        }
+
+        public void SetLobbyStarted()
+        {
+            _currentProvider.SetLobbyStartedAsync();
         }
 
         [System.Serializable]
