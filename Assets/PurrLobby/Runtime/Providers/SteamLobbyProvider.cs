@@ -44,6 +44,7 @@ namespace PurrLobby.Providers
         private CSteamID _currentLobby;
         private Callback<LobbyDataUpdate_t> _lobbyDataUpdateCallback;
         public CSteamID CurrentLobby => _currentLobby;
+        private Callback<AvatarImageLoaded_t> _avatarImageLoadedCallback;
 
         public async Task InitializeAsync()
         {
@@ -60,6 +61,7 @@ namespace PurrLobby.Providers
                 }
             }
             
+            _avatarImageLoadedCallback = Callback<AvatarImageLoaded_t>.Create(OnAvatarImageLoaded);
             _lobbyDataUpdateCallback = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
 
             int retries = 100;
@@ -305,22 +307,15 @@ namespace PurrLobby.Providers
             var avatarHandle = SteamFriends.GetLargeFriendAvatar(steamId);
             Texture2D avatar = null;
 
-            if (avatarHandle != -1)
+            if (avatarHandle != -1 && SteamUtils.GetImageSize(avatarHandle, out uint width, out uint height))
             {
-                uint width, height;
-                if (SteamUtils.GetImageSize(avatarHandle, out width, out height))
+                byte[] imageBuffer = new byte[width * height * 4];
+                if (SteamUtils.GetImageRGBA(avatarHandle, imageBuffer, imageBuffer.Length))
                 {
-                    byte[] imageBuffer = new byte[width * height * 4];
-                    if (SteamUtils.GetImageRGBA(avatarHandle, imageBuffer, imageBuffer.Length))
-                    {
-                        avatar = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
-                        avatar.LoadRawTextureData(imageBuffer);
-
-                        // Flip the texture vertically
-                        FlipTextureVertically(avatar);
-
-                        avatar.Apply();
-                    }
+                    avatar = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
+                    avatar.LoadRawTextureData(imageBuffer);
+                    FlipTextureVertically(avatar);
+                    avatar.Apply();
                 }
             }
 
@@ -331,6 +326,58 @@ namespace PurrLobby.Providers
                 IsReady = isReady,
                 Avatar = avatar
             };
+        }
+        
+        private void OnAvatarImageLoaded(AvatarImageLoaded_t callback)
+        {
+            var steamId = callback.m_steamID;
+            if (callback.m_iImage == -1)
+            {
+                Debug.LogWarning($"Failed to load avatar for user {steamId}");
+                return;
+            }
+
+            if (SteamUtils.GetImageSize(callback.m_iImage, out uint width, out uint height))
+            {
+                byte[] imageBuffer = new byte[width * height * 4];
+                if (SteamUtils.GetImageRGBA(callback.m_iImage, imageBuffer, imageBuffer.Length))
+                {
+                    Texture2D avatar = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
+                    avatar.LoadRawTextureData(imageBuffer);
+                    FlipTextureVertically(avatar);
+                    avatar.Apply();
+
+                    // Update the avatar in the lobby user's data
+                    UpdateUserAvatar(steamId, avatar);
+                }
+            }
+        }
+        
+        private void UpdateUserAvatar(CSteamID steamId, Texture2D avatar)
+        {
+            var updatedMembers = GetLobbyUsers(_currentLobby);
+
+            for (int i = 0; i < updatedMembers.Count; i++)
+            {
+                if (updatedMembers[i].Id == steamId.m_SteamID.ToString())
+                {
+                    var updatedUser = updatedMembers[i];
+                    updatedUser.Avatar = avatar;
+                    updatedMembers[i] = updatedUser;
+                    break;
+                }
+            }
+            
+            var updatedRoom = new LobbyRoom
+            {
+                IsValid = true,
+                RoomId = _currentLobby.m_SteamID.ToString(),
+                MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                Properties = new Dictionary<string, string>(), // Use existing properties if needed
+                Members = updatedMembers
+            };
+
+            OnRoomUpdated?.Invoke(updatedRoom);
         }
         
         public async Task<string> GetLocalUserIdAsync()

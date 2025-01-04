@@ -90,7 +90,11 @@ namespace PurrLobby
             _currentProvider.OnInviteAccepted += inviteId => InvokeDelayed(() => OnInviteAccepted.Invoke(inviteId));
             _currentProvider.OnInviteDeclined += inviteId => InvokeDelayed(() => OnInviteDeclined.Invoke(inviteId));
             _currentProvider.OnRoomJoinFailed += message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
-            _currentProvider.OnRoomLeft += () => InvokeDelayed(() => OnRoomLeft.Invoke());
+            _currentProvider.OnRoomLeft += () => InvokeDelayed(() =>
+            {
+                _currentLobby = default;
+                OnRoomLeft.Invoke();
+            });
             _currentProvider.OnRoomUpdated += room => InvokeDelayed(() =>
             {
                 if (!HasRoomStateChanged(room)) return;
