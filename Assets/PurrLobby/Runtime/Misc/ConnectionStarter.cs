@@ -55,6 +55,12 @@ namespace PurrLobby
             
             if(_lobbyDataHolder.CurrentLobby.IsOwner)
                 _networkManager.StartServer();
+            StartCoroutine(StartClient());
+        }
+
+        private IEnumerator StartClient()
+        {
+            yield return new WaitForSeconds(1f);
             _networkManager.StartClient();
         }
     }

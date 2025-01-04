@@ -40,8 +40,11 @@ public class TextWobbler : MonoBehaviour
         for (int i = 0; i < textInfo.meshInfo.Length; i++)
         {
             var meshInfo = textInfo.meshInfo[i];
-            meshInfo.mesh.vertices = meshInfo.vertices;
-            textMesh.UpdateGeometry(meshInfo.mesh, i);
+            if (meshInfo.mesh)
+            {
+                meshInfo.mesh.vertices = meshInfo.vertices;
+                textMesh.UpdateGeometry(meshInfo.mesh, i);
+            }
         }
     }
 }
