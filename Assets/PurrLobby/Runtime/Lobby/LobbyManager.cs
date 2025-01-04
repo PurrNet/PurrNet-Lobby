@@ -5,6 +5,7 @@ using PurrNet;
 using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace PurrLobby
 {
@@ -16,6 +17,7 @@ namespace PurrLobby
         private readonly Queue<Action> _delayedActions = new Queue<Action>();
 
         public CreateRoomArgs createRoomArgs = new();
+        public SerializableDictionary<string, string> searchRoomArgs = new();
 
         // Events exposed by the manager
         public UnityEvent<LobbyUser> OnInviteReceived = new UnityEvent<LobbyUser>();
@@ -26,6 +28,7 @@ namespace PurrLobby
         public UnityEvent OnRoomLeft = new UnityEvent();
         public UnityEvent<LobbyRoom> OnRoomUpdated = new UnityEvent<LobbyRoom>();
         public UnityEvent<IEnumerable<LobbyUser>> OnPlayerListUpdated = new UnityEvent<IEnumerable<LobbyUser>>();
+        public UnityEvent<List<LobbyRoom>> OnRoomSearchResults = new UnityEvent<List<LobbyRoom>>();
         public UnityEvent<string> OnError = new UnityEvent<string>();
 
         public UnityEvent onInitialized = new UnityEvent();
@@ -239,14 +242,14 @@ namespace PurrLobby
 
         public void SearchRooms(int maxRoomsToFind = 10, Dictionary<string, string> filters = null)
         {
+            if(filters == null)
+                filters = searchRoomArgs.ToDictionary();
+            
             RunTask(async () =>
             {
                 EnsureProviderSet();
                 var rooms = await _currentProvider.SearchRoomsAsync(maxRoomsToFind, filters);
-                foreach (var room in rooms)
-                {
-                    Debug.Log($"Found room: {room.RoomId}");
-                }
+                OnRoomSearchResults?.Invoke(rooms);
             });
         }
         

@@ -108,6 +108,7 @@ namespace PurrLobby.Providers
 
             var updatedRoom = new LobbyRoom
             {
+                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 IsValid = true,
                 RoomId = _currentLobby.m_SteamID.ToString(),
                 MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
@@ -213,6 +214,7 @@ namespace PurrLobby.Providers
             var callResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
             var handle = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, maxPlayers);
             callResult.Set(handle);
+            SteamMatchmaking.SetLobbyData(_currentLobby, "Name", $"{SteamFriends.GetPersonaName()}'s Lobby");
 
             if (!await tcs.Task)
                 return new LobbyRoom { IsValid = false };
@@ -229,6 +231,7 @@ namespace PurrLobby.Providers
 
             return new LobbyRoom
             {
+                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 IsValid = true,
                 RoomId = lobbyId.m_SteamID.ToString(),
                 MaxPlayers = maxPlayers,
@@ -269,6 +272,7 @@ namespace PurrLobby.Providers
 
             var room = new LobbyRoom
             {
+                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 IsValid = true,
                 RoomId = roomId,
                 MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
@@ -335,6 +339,7 @@ namespace PurrLobby.Providers
 
                         results.Add(new LobbyRoom
                         {
+                            Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                             IsValid = true,
                             RoomId = lobbyId.m_SteamID.ToString(),
                             MaxPlayers = maxPlayers,
@@ -424,6 +429,7 @@ namespace PurrLobby.Providers
             
             var updatedRoom = new LobbyRoom
             {
+                Name = SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 IsValid = true,
                 RoomId = _currentLobby.m_SteamID.ToString(),
                 MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),

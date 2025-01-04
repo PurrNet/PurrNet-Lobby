@@ -9,6 +9,7 @@ namespace PurrLobby.Editor
     public class LobbyManagerEditor : UnityEditor.Editor
     {
         private bool showCreateRoomArgs = false;
+        private bool showSearchRoomArgs = false;
         private bool showEvents = false;
         private bool showRoomStatus = true;
         private Dictionary<string, bool> memberFoldouts = new Dictionary<string, bool>();
@@ -22,6 +23,10 @@ namespace PurrLobby.Editor
             EditorGUILayout.Space();
 
             DrawCreateRoomArgs();
+            
+            EditorGUILayout.Space();
+
+            DrawSearchRoomArgs();
 
             EditorGUILayout.Space();
 
@@ -87,6 +92,25 @@ namespace PurrLobby.Editor
                         DrawSerializableDictionary(roomPropertiesProp);
                     }
 
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawSearchRoomArgs()
+        {
+            var serializedObject = new SerializedObject(target);
+            var searchRoomArgsProp = serializedObject.FindProperty("searchRoomArgs");
+
+            if (searchRoomArgsProp != null)
+            {
+                showSearchRoomArgs = EditorGUILayout.Foldout(showSearchRoomArgs, "Search Room Arguments", true);
+                if (showSearchRoomArgs)
+                {
+                    EditorGUI.indentLevel++;
+                    DrawSerializableDictionary(searchRoomArgsProp);
                     EditorGUI.indentLevel--;
                 }
             }

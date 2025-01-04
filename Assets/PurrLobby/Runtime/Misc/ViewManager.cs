@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace PurrLobby
 {
@@ -49,6 +50,7 @@ namespace PurrLobby
             view.canvasGroup.interactable = true;
             view.canvasGroup.blocksRaycasts = true;
             view.OnShow();
+            view.OnViewShow?.Invoke();
         }
 
         private void HideViewInternal(View view)
@@ -57,6 +59,7 @@ namespace PurrLobby
             view.canvasGroup.interactable = false;
             view.canvasGroup.blocksRaycasts = false;
             view.OnHide();
+            view.OnViewHide?.Invoke();
         }
 
         #region Events
@@ -99,6 +102,9 @@ namespace PurrLobby
     {
         private CanvasGroup _canvasGroup;
         public CanvasGroup canvasGroup => _canvasGroup;
+
+        public UnityEvent OnViewShow = new();
+        public UnityEvent OnViewHide = new();
 
         protected virtual void Awake()
         {

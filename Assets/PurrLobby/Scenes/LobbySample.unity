@@ -172,6 +172,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14c2176eb87b0bf4990e9fd3650259f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnViewShow:
+    m_PersistentCalls:
+      m_Calls: []
+  OnViewHide:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!225 &32129102
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -527,6 +533,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a446005322ec4f48a242fecf3b008d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnViewShow:
+    m_PersistentCalls:
+      m_Calls: []
+  OnViewHide:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!225 &210951987
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -667,6 +679,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b03fb9012ac069944b4753471bd6f099, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnViewShow:
+    m_PersistentCalls:
+      m_Calls: []
+  OnViewHide:
+    m_PersistentCalls:
+      m_Calls: []
+  lobbyManager: {fileID: 1097043115}
+  lobbyList: {fileID: 2086255125}
 --- !u!225 &267031315
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1667,7 +1687,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2072866401}
   m_HandleRect: {fileID: 2072866400}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1793,7 +1813,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2108945444}
   m_HandleRect: {fileID: 2108945443}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1899,10 +1919,19 @@ MonoBehaviour:
   createRoomArgs:
     maxPlayers: 5
     roomProperties:
-      keys: []
-      values: []
+      keys:
+      - PurrNet
+      values:
+      - IsTheBest
       stringKeys: []
       stringValues: []
+  searchRoomArgs:
+    keys:
+    - PurrNet
+    values:
+    - IsTheBest
+    stringKeys: []
+    stringValues: []
   OnInviteReceived:
     m_PersistentCalls:
       m_Calls: []
@@ -1987,6 +2016,21 @@ MonoBehaviour:
   OnPlayerListUpdated:
     m_PersistentCalls:
       m_Calls: []
+  OnRoomSearchResults:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2086255125}
+        m_TargetAssemblyTypeName: PurrLobby.LobbyList, PurrNetLobbySetup
+        m_MethodName: Populate
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   OnError:
     m_PersistentCalls:
       m_Calls: []
@@ -2086,6 +2130,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4f8e50477de5154a982d1a5588a0dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnViewShow:
+    m_PersistentCalls:
+      m_Calls: []
+  OnViewHide:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!225 &1101296067
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2318,7 +2368,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 43.1
+  m_fontSize: 44.05
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2471,7 +2521,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 98
+  m_fontSize: 95.6
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2660,7 +2710,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 91.2
+  m_fontSize: 89
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3093,6 +3143,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fdd4683bf8e7ab48a545555a285b1f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnViewShow:
+    m_PersistentCalls:
+      m_Calls: []
+  OnViewHide:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!225 &1295349078
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -4836,7 +4892,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 34.3
+  m_fontSize: 35.1
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -5105,6 +5161,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2086255121}
+  - component: {fileID: 2086255125}
   - component: {fileID: 2086255124}
   - component: {fileID: 2086255123}
   - component: {fileID: 2086255122}
@@ -5204,6 +5261,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2086255120}
   m_CullTransparentMesh: 1
+--- !u!114 &2086255125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2086255120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 550dfcb93143f514c910a297ab2db28f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lobbyEntryPrefab: {fileID: 8034784290185517773, guid: e3910e62b256a2a46864060a999dd67e, type: 3}
+  content: {fileID: 1771840637}
 --- !u!1 &2108945442
 GameObject:
   m_ObjectHideFlags: 0
