@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using PurrNet;
+using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -32,11 +33,14 @@ namespace PurrLobby
 
         public ILobbyProvider CurrentProvider => currentProvider as ILobbyProvider;
         
-        private LobbyRoom _currentRoom;
-        public LobbyRoom CurrentRoom => _currentRoom;
+        private LobbyRoom _currentLobby;
+        private LobbyRoom _lastKnownRoomState;
+        public LobbyRoom CurrentLobby => _currentLobby;
 
         private void Awake()
         {
+            _lastKnownRoomState = new LobbyRoom { IsValid = false };
+
             if (CurrentProvider != null)
                 SetProvider(CurrentProvider);
             else
@@ -87,7 +91,15 @@ namespace PurrLobby
             _currentProvider.OnInviteDeclined += inviteId => InvokeDelayed(() => OnInviteDeclined.Invoke(inviteId));
             _currentProvider.OnRoomJoinFailed += message => InvokeDelayed(() => OnRoomJoinFailed.Invoke(message));
             _currentProvider.OnRoomLeft += () => InvokeDelayed(() => OnRoomLeft.Invoke());
-            _currentProvider.OnRoomUpdated += room => InvokeDelayed(() => OnRoomUpdated.Invoke(room));
+            _currentProvider.OnRoomUpdated += room => InvokeDelayed(() =>
+            {
+                if (!HasRoomStateChanged(room)) return;
+
+                _lastKnownRoomState = room;
+                _currentLobby = room;
+                OnRoomUpdated.Invoke(room);
+            });
+
             _currentProvider.OnPlayerListUpdated += players => InvokeDelayed(() => OnPlayerListUpdated.Invoke(players));
             _currentProvider.OnError += error => InvokeDelayed(() => OnError.Invoke(error));
 
@@ -183,7 +195,7 @@ namespace PurrLobby
             {
                 EnsureProviderSet();
                 var room = await _currentProvider.CreateRoomAsync(maxPlayers, roomProperties);
-                _currentRoom = room;
+                _currentLobby = room;
                 OnRoomUpdated?.Invoke(room);
             });
         }
@@ -242,15 +254,24 @@ namespace PurrLobby
                 await _currentProvider.SetIsReadyAsync(userId, isReady);
             });
         }
-        
-        public void GetLobbyMembers()
+
+        public void ToggleLocalReady()
         {
-            RunTask(async () =>
+            if (!_currentLobby.IsValid)
             {
-                EnsureProviderSet();
-                var members = await _currentProvider.GetLobbyMembersAsync();
-                OnPlayerListUpdated?.Invoke(members);
-            });
+                PurrLogger.LogError($"Can't toggle ready state, current lobby is invalid.");
+                return;
+            }
+            
+            var localUserId = _currentProvider.GetLocalUserIdAsync().Result;
+            if (string.IsNullOrEmpty(localUserId))
+            {
+                PurrLogger.LogError($"Can't toggle ready state, local user ID is null or empty.");
+                return;
+            }
+            
+            var localLobbyUser = _currentLobby.Members.Find(x => x.Id == localUserId);
+            SetIsReady(localUserId, !localLobbyUser.IsReady);
         }
 
         private void RunTask(Task task)
@@ -274,6 +295,23 @@ namespace PurrLobby
         {
             if (_currentProvider == null)
                 throw new InvalidOperationException("No lobby provider has been set.");
+        }
+        
+        private bool HasRoomStateChanged(LobbyRoom newRoom)
+        {
+            if (!_lastKnownRoomState.IsValid || newRoom.RoomId != _lastKnownRoomState.RoomId || newRoom.Members.Count != _lastKnownRoomState.Members.Count)
+                return true;
+
+            for (int i = 0; i < newRoom.Members.Count; i++)
+            {
+                var newMember = newRoom.Members[i];
+                var oldMember = _lastKnownRoomState.Members[i];
+
+                if (newMember.Id != oldMember.Id || newMember.IsReady != oldMember.IsReady || newMember.DisplayName != oldMember.DisplayName)
+                    return true;
+            }
+
+            return false;
         }
 
         [System.Serializable]

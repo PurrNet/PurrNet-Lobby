@@ -25,6 +25,7 @@ namespace PurrLobby
         Task<IEnumerable<LobbyRoom>> SearchRoomsAsync(Dictionary<string, string> filters = null);
         Task SetIsReadyAsync(string userId, bool isReady);
         Task<IEnumerable<LobbyUser>> GetLobbyMembersAsync();
+        Task<string> GetLocalUserIdAsync();
 
         // Events
         event UnityAction<LobbyUser> OnInviteReceived;

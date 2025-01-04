@@ -12,9 +12,11 @@ using Steamworks;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace PurrLobby.Providers
 {
@@ -24,6 +26,8 @@ namespace PurrLobby.Providers
 #endif
     {
 #if STEAMWORKS_NET_PACKAGE && !DISABLESTEAMWORKS
+
+        
         public event UnityAction<LobbyUser> OnInviteReceived;
         public event UnityAction<string> OnInviteAccepted;
         public event UnityAction<string> OnInviteDeclined;
@@ -33,11 +37,12 @@ namespace PurrLobby.Providers
         public event UnityAction<IEnumerable<LobbyUser>> OnPlayerListUpdated;
         public event UnityAction<string> OnError;
 
-        [SerializeField] private bool forceSteamInit = false;
+        [SerializeField] private bool handleSteamInit = false;
 
         private bool _initialized;
         private bool _runCallbacks;
         private CSteamID _currentLobby;
+        private Callback<LobbyDataUpdate_t> _lobbyDataUpdateCallback;
         public CSteamID CurrentLobby => _currentLobby;
 
         public async Task InitializeAsync()
@@ -45,7 +50,7 @@ namespace PurrLobby.Providers
             if (_initialized)
                 return;
 
-            if (forceSteamInit)
+            if (handleSteamInit)
             {
                 if (!SteamAPI.Init())
                 {
@@ -54,6 +59,8 @@ namespace PurrLobby.Providers
                     return;
                 }
             }
+            
+            _lobbyDataUpdateCallback = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
 
             int retries = 100;
             while (retries > 0)
@@ -70,10 +77,7 @@ namespace PurrLobby.Providers
                         return;
                     }
                 }
-                catch (System.InvalidOperationException)
-                {
-                    
-                }
+                catch (System.InvalidOperationException) { }
 
                 await Task.Delay(100);
                 retries--;
@@ -91,14 +95,34 @@ namespace PurrLobby.Providers
                 await Task.Delay(16);
             }
         }
+        
+        private void OnLobbyDataUpdate(LobbyDataUpdate_t callback)
+        {
+            if (_currentLobby.m_SteamID != callback.m_ulSteamIDLobby)
+                return;
+
+            var updatedLobbyUsers = GetLobbyUsers(_currentLobby);
+            OnPlayerListUpdated?.Invoke(updatedLobbyUsers);
+
+            var updatedRoom = new LobbyRoom
+            {
+                IsValid = true,
+                RoomId = _currentLobby.m_SteamID.ToString(),
+                MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
+                Properties = new Dictionary<string, string>(), // Populate as needed
+                Members = updatedLobbyUsers
+            };
+
+            OnRoomUpdated?.Invoke(updatedRoom);
+        }
 
         public void Shutdown()
         {
             if (_initialized)
             {
-                _runCallbacks = false;
+                _lobbyDataUpdateCallback = null;
 
-                if (forceSteamInit)
+                if (handleSteamInit)
                 {
                     SteamAPI.Shutdown();
                 }
@@ -130,35 +154,19 @@ namespace PurrLobby.Providers
         
         public async Task SetIsReadyAsync(string userId, bool isReady)
         {
-            // Example placeholder logic; customize based on SteamLobby API
-            var lobbyId = SteamUser.GetSteamID();
+            if (!_initialized)
+                return;
+
+            var lobbyId = _currentLobby;
             SteamMatchmaking.SetLobbyMemberData(lobbyId, "IsReady", isReady.ToString());
-            OnPlayerListUpdated?.Invoke(await GetLobbyMembersAsync());
+
+            SteamMatchmaking.SetLobbyData(lobbyId, "UpdateTrigger", DateTime.UtcNow.Ticks.ToString());
         }
         
         public async Task<IEnumerable<LobbyUser>> GetLobbyMembersAsync()
         {
-            var members = new List<LobbyUser>();
-            if (!_initialized) return members;
-
-            var lobbyId = SteamUser.GetSteamID();
-            int memberCount = SteamMatchmaking.GetNumLobbyMembers(lobbyId);
-
-            for (int i = 0; i < memberCount; i++)
-            {
-                var memberId = SteamMatchmaking.GetLobbyMemberByIndex(lobbyId, i);
-                var isReadyString = SteamMatchmaking.GetLobbyMemberData(lobbyId, memberId, "IsReady");
-                var isReady = !string.IsNullOrEmpty(isReadyString) && isReadyString == "True";
-
-                members.Add(new LobbyUser
-                {
-                    Id = memberId.m_SteamID.ToString(),
-                    DisplayName = SteamFriends.GetFriendPersonaName(memberId),
-                    IsReady = isReady
-                });
-            }
-
-            return members;
+            if (!_initialized) return new List<LobbyUser>();
+            return GetLobbyUsers(SteamUser.GetSteamID());
         }
 
         public async Task InviteFriendAsync(LobbyUser user)
@@ -217,8 +225,8 @@ namespace PurrLobby.Providers
                 IsValid = true,
                 RoomId = lobbyId.m_SteamID.ToString(),
                 MaxPlayers = maxPlayers,
-                CurrentPlayers = 1,
-                Properties = roomProperties ?? new Dictionary<string, string>()
+                Properties = roomProperties ?? new Dictionary<string, string>(),
+                Members = GetLobbyUsers(lobbyId)
             };
 
             foreach (var prop in room.Properties)
@@ -250,7 +258,8 @@ namespace PurrLobby.Providers
             }
 
             var callResult = CallResult<LobbyEnter_t>.Create(OnLobbyJoined);
-            var handle = SteamMatchmaking.JoinLobby(new CSteamID(ulong.Parse(roomId)));
+            var lobbyId = new CSteamID(ulong.Parse(roomId));
+            var handle = SteamMatchmaking.JoinLobby(lobbyId);
             callResult.Set(handle);
 
             if (!await tcs.Task)
@@ -264,8 +273,8 @@ namespace PurrLobby.Providers
                 IsValid = true,
                 RoomId = roomId,
                 MaxPlayers = SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
-                CurrentPlayers = SteamMatchmaking.GetNumLobbyMembers(_currentLobby),
-                Properties = new Dictionary<string, string>()
+                Properties = new Dictionary<string, string>(),
+                Members = GetLobbyUsers(lobbyId)
             };
 
             OnRoomUpdated?.Invoke(room);
@@ -285,6 +294,86 @@ namespace PurrLobby.Providers
         public Task<IEnumerable<LobbyRoom>> SearchRoomsAsync(Dictionary<string, string> filters = null)
         {
             return Task.FromResult<IEnumerable<LobbyRoom>>(null);
+        }
+        
+        private LobbyUser CreateLobbyUser(CSteamID steamId, CSteamID lobbyId)
+        {
+            var displayName = SteamFriends.GetFriendPersonaName(steamId);
+            var isReadyString = SteamMatchmaking.GetLobbyMemberData(lobbyId, steamId, "IsReady");
+            var isReady = !string.IsNullOrEmpty(isReadyString) && isReadyString == "True";
+
+            var avatarHandle = SteamFriends.GetLargeFriendAvatar(steamId);
+            Texture2D avatar = null;
+
+            if (avatarHandle != -1)
+            {
+                uint width, height;
+                if (SteamUtils.GetImageSize(avatarHandle, out width, out height))
+                {
+                    byte[] imageBuffer = new byte[width * height * 4];
+                    if (SteamUtils.GetImageRGBA(avatarHandle, imageBuffer, imageBuffer.Length))
+                    {
+                        avatar = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
+                        avatar.LoadRawTextureData(imageBuffer);
+
+                        // Flip the texture vertically
+                        FlipTextureVertically(avatar);
+
+                        avatar.Apply();
+                    }
+                }
+            }
+
+            return new LobbyUser
+            {
+                Id = steamId.m_SteamID.ToString(),
+                DisplayName = displayName,
+                IsReady = isReady,
+                Avatar = avatar
+            };
+        }
+        
+        public async Task<string> GetLocalUserIdAsync()
+        {
+            if (!_initialized)
+                return null;
+
+            return await Task.FromResult(SteamUser.GetSteamID().m_SteamID.ToString());
+        }
+
+        private void FlipTextureVertically(Texture2D texture)
+        {
+            var pixels = texture.GetPixels();
+            int width = texture.width;
+            int height = texture.height;
+
+            for (int y = 0; y < height / 2; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    var topPixel = pixels[y * width + x];
+                    var bottomPixel = pixels[(height - 1 - y) * width + x];
+
+                    pixels[y * width + x] = bottomPixel;
+                    pixels[(height - 1 - y) * width + x] = topPixel;
+                }
+            }
+
+            texture.SetPixels(pixels);
+        }
+
+        private List<LobbyUser> GetLobbyUsers(CSteamID lobbyId)
+        {
+            var users = new List<LobbyUser>();
+            int memberCount = SteamMatchmaking.GetNumLobbyMembers(lobbyId);
+
+            for (int i = 0; i < memberCount; i++)
+            {
+                var steamId = SteamMatchmaking.GetLobbyMemberByIndex(lobbyId, i);
+                users.Add(CreateLobbyUser(steamId, lobbyId));
+            }
+
+            return users;
         }
 #endif
     }
