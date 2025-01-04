@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrLobby
@@ -11,6 +12,7 @@ namespace PurrLobby
 
         public void Populate(List<LobbyRoom> rooms)
         {
+            PurrLogger.Log($"Populating lobby list with {rooms.Count} rooms.");
             foreach (Transform child in content)
                 Destroy(child.gameObject);
             

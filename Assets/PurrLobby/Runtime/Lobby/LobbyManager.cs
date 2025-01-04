@@ -306,7 +306,7 @@ namespace PurrLobby
         
         private bool HasRoomStateChanged(LobbyRoom newRoom)
         {
-            if (!_lastKnownRoomState.IsValid || newRoom.RoomId != _lastKnownRoomState.RoomId || newRoom.Members.Count != _lastKnownRoomState.Members.Count)
+            if (!_lastKnownRoomState.IsValid || newRoom.Name != _lastKnownRoomState.Name || newRoom.RoomId != _lastKnownRoomState.RoomId || newRoom.Members.Count != _lastKnownRoomState.Members.Count || newRoom.Properties.Count != _lastKnownRoomState.Properties.Count)
                 return true;
 
             for (int i = 0; i < newRoom.Members.Count; i++)
@@ -314,7 +314,7 @@ namespace PurrLobby
                 var newMember = newRoom.Members[i];
                 var oldMember = _lastKnownRoomState.Members[i];
 
-                if (newMember.Id != oldMember.Id || newMember.IsReady != oldMember.IsReady || newMember.DisplayName != oldMember.DisplayName)
+                if (newMember.Id != oldMember.Id || newMember.IsReady != oldMember.IsReady || newMember.DisplayName != oldMember.DisplayName || newMember.Avatar != oldMember.Avatar)
                     return true;
             }
 

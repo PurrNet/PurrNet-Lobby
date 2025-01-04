@@ -16,7 +16,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace PurrLobby.Providers
 {
@@ -100,6 +99,7 @@ namespace PurrLobby.Providers
         
         private void OnLobbyDataUpdate(LobbyDataUpdate_t callback)
         {
+            Debug.Log($"Lobby data updated: {callback.m_ulSteamIDLobby}");
             if (_currentLobby.m_SteamID != callback.m_ulSteamIDLobby)
                 return;
 
@@ -139,7 +139,7 @@ namespace PurrLobby.Providers
                 updatedLobbyUsers,
                 updatedProperties
             );
-
+            
             OnRoomUpdated?.Invoke(updatedRoom);
         }
 
@@ -147,6 +147,7 @@ namespace PurrLobby.Providers
         {
             if (_initialized)
             {
+                _runCallbacks = false;
                 _lobbyDataUpdateCallback = null;
 
                 if (handleSteamInit)
@@ -181,10 +182,16 @@ namespace PurrLobby.Providers
         
         public async Task SetIsReadyAsync(string userId, bool isReady)
         {
-            if (!_initialized)
-                return;
+            if (!_initialized) return;
 
             var lobbyId = _currentLobby;
+            var userExists = GetLobbyUsers(lobbyId).Any(user => user.Id == userId);
+            if (!userExists)
+            {
+                Debug.LogError($"User {userId} no longer exists in the lobby.");
+                return;
+            }
+
             SteamMatchmaking.SetLobbyMemberData(lobbyId, "IsReady", isReady.ToString());
 
             SteamMatchmaking.SetLobbyData(lobbyId, "UpdateTrigger", DateTime.UtcNow.Ticks.ToString());
@@ -452,7 +459,6 @@ namespace PurrLobby.Providers
                     FlipTextureVertically(avatar);
                     avatar.Apply();
 
-                    // Update the avatar in the lobby user's data
                     UpdateUserAvatar(steamId, avatar);
                 }
             }
@@ -541,7 +547,7 @@ namespace PurrLobby.Providers
 
         private void LeaveRoomIfInLobby()
         {
-            if (_currentLobby.m_SteamID != 0) // Check if the player is in a room
+            if (_currentLobby.m_SteamID != 0)
             {
                 SteamMatchmaking.LeaveLobby(_currentLobby);
                 _currentLobby = default;
