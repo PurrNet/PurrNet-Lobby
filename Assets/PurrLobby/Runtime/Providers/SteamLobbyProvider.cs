@@ -165,7 +165,7 @@ namespace PurrLobby.Providers
             SteamMatchmaking.SetLobbyData(lobbyId, "UpdateTrigger", DateTime.UtcNow.Ticks.ToString());
         }
         
-        public async Task<IEnumerable<LobbyUser>> GetLobbyMembersAsync()
+        public async Task<List<LobbyUser>> GetLobbyMembersAsync()
         {
             if (!_initialized) return new List<LobbyUser>();
             return GetLobbyUsers(SteamUser.GetSteamID());
@@ -215,14 +215,19 @@ namespace PurrLobby.Providers
             callResult.Set(handle);
 
             if (!await tcs.Task)
-            {
-                OnRoomJoinFailed?.Invoke("Failed to create lobby.");
                 return new LobbyRoom { IsValid = false };
-            }
 
             _currentLobby = lobbyId;
 
-            var room = new LobbyRoom
+            if (roomProperties != null)
+            {
+                foreach (var prop in roomProperties)
+                {
+                    SteamMatchmaking.SetLobbyData(lobbyId, prop.Key, prop.Value);
+                }
+            }
+
+            return new LobbyRoom
             {
                 IsValid = true,
                 RoomId = lobbyId.m_SteamID.ToString(),
@@ -230,14 +235,6 @@ namespace PurrLobby.Providers
                 Properties = roomProperties ?? new Dictionary<string, string>(),
                 Members = GetLobbyUsers(lobbyId)
             };
-
-            foreach (var prop in room.Properties)
-            {
-                SteamMatchmaking.SetLobbyData(lobbyId, prop.Key, prop.Value);
-            }
-
-            OnRoomUpdated?.Invoke(room);
-            return room;
         }
         
         public async Task<LobbyRoom> JoinRoomAsync(string roomId)
@@ -293,9 +290,66 @@ namespace PurrLobby.Providers
             return Task.CompletedTask;
         }
 
-        public Task<IEnumerable<LobbyRoom>> SearchRoomsAsync(Dictionary<string, string> filters = null)
+        public async Task<List<LobbyRoom>> SearchRoomsAsync(int maxRoomsToFind = 10, Dictionary<string, string> filters = null)
         {
-            return Task.FromResult<IEnumerable<LobbyRoom>>(null);
+            if (!_initialized)
+                return new List<LobbyRoom>();
+
+            var tcs = new TaskCompletionSource<List<LobbyRoom>>();
+            var results = new List<LobbyRoom>();
+
+            void OnLobbiesMatching(LobbyMatchList_t result, bool ioFailure)
+            {
+                int count = (int)result.m_nLobbiesMatching;
+                count = Math.Min(count, maxRoomsToFind);
+
+                for (int i = 0; i < count; i++)
+                {
+                    var lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
+                    var roomProperties = new Dictionary<string, string>();
+                    bool match = true;
+
+                    if (filters != null)
+                    {
+                        foreach (var filter in filters)
+                        {
+                            string value = SteamMatchmaking.GetLobbyData(lobbyId, filter.Key);
+                            if (value != filter.Value)
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (match)
+                    {
+                        int maxPlayers = SteamMatchmaking.GetLobbyMemberLimit(lobbyId);
+                        if (filters != null)
+                        {
+                            foreach (var key in filters.Keys)
+                            {
+                                roomProperties[key] = SteamMatchmaking.GetLobbyData(lobbyId, key);
+                            }
+                        }
+
+                        results.Add(new LobbyRoom
+                        {
+                            IsValid = true,
+                            RoomId = lobbyId.m_SteamID.ToString(),
+                            MaxPlayers = maxPlayers,
+                            Properties = roomProperties,
+                            Members = GetLobbyUsers(lobbyId)
+                        });
+                    }
+                }
+                tcs.TrySetResult(results);
+            }
+
+            var callResult = CallResult<LobbyMatchList_t>.Create(OnLobbiesMatching);
+            SteamMatchmaking.RequestLobbyList();
+            callResult.Set(SteamMatchmaking.RequestLobbyList());
+            return await tcs.Task;
         }
         
         private LobbyUser CreateLobbyUser(CSteamID steamId, CSteamID lobbyId)

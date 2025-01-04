@@ -22,9 +22,9 @@ namespace PurrLobby
         Task<LobbyRoom> CreateRoomAsync(int maxPlayers, Dictionary<string, string> roomProperties = null);
         Task LeaveRoomAsync();
         Task<LobbyRoom> JoinRoomAsync(string roomId);
-        Task<IEnumerable<LobbyRoom>> SearchRoomsAsync(Dictionary<string, string> filters = null);
+        Task<List<LobbyRoom>> SearchRoomsAsync(int maxRoomsToFind = 10, Dictionary<string, string> filters = null);
         Task SetIsReadyAsync(string userId, bool isReady);
-        Task<IEnumerable<LobbyUser>> GetLobbyMembersAsync();
+        Task<List<LobbyUser>> GetLobbyMembersAsync();
         Task<string> GetLocalUserIdAsync();
 
         // Events

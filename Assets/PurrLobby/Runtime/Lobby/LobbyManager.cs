@@ -237,12 +237,12 @@ namespace PurrLobby
             });
         }
 
-        public void SearchRooms(Dictionary<string, string> filters = null)
+        public void SearchRooms(int maxRoomsToFind = 10, Dictionary<string, string> filters = null)
         {
             RunTask(async () =>
             {
                 EnsureProviderSet();
-                var rooms = await _currentProvider.SearchRoomsAsync(filters);
+                var rooms = await _currentProvider.SearchRoomsAsync(maxRoomsToFind, filters);
                 foreach (var room in rooms)
                 {
                     Debug.Log($"Found room: {room.RoomId}");
