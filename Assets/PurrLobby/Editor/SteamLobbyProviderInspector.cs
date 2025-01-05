@@ -1,5 +1,8 @@
 using PurrLobby.Providers;
+
+#if STEAMWORKS_NET_PACKAGE
 using Steamworks;
+#endif
 using UnityEditor;
 using UnityEngine;
 
