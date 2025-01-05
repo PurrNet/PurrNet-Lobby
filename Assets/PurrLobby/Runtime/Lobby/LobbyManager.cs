@@ -37,7 +37,12 @@ namespace PurrLobby
 
         private Lobby _currentLobby
         {
-            get => _lobbyDataHolder.CurrentLobby;
+            get
+            {
+                if (!_lobbyDataHolder)
+                    return default;
+                return _lobbyDataHolder.CurrentLobby;
+            }
             set
             {
                 _lobbyDataHolder.SetCurrentLobby(value);
