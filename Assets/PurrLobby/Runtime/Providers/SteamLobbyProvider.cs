@@ -27,11 +27,6 @@ namespace PurrLobby.Providers
     {
 #if STEAMWORKS_NET_PACKAGE && !DISABLESTEAMWORKS
 
-        
-        public event UnityAction<LobbyUser> OnInviteReceived;
-        public event UnityAction<string> OnInviteAccepted;
-        public event UnityAction<string> OnInviteDeclined;
-
         public event UnityAction<string> OnLobbyJoinFailed;
         public event UnityAction OnLobbyLeft;
         public event UnityAction<Lobby> OnLobbyUpdated;
@@ -181,7 +176,7 @@ namespace PurrLobby.Providers
             }
         }
 
-        public async Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter)
+        public Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter)
         {
             if (!_initialized) return null;
 
@@ -204,39 +199,43 @@ namespace PurrLobby.Providers
                     friends.Add(CreateFriendUser(steamID));
             }
 
-            return friends;
+            return Task.FromResult(friends);
         }
         
-        public async Task SetIsReadyAsync(string userId, bool isReady)
+        public Task SetIsReadyAsync(string userId, bool isReady)
         {
-            if (!_initialized) return;
+            if (!_initialized) 
+                return Task.FromResult(Task.CompletedTask);
 
             var lobbyId = _currentLobby;
             var userExists = GetLobbyUsers(lobbyId).Any(user => user.Id == userId);
             if (!userExists)
             {
                 PurrLogger.LogError($"User {userId} no longer exists in the lobby.");
-                return;
+                return Task.FromResult(Task.CompletedTask);
             }
 
             SteamMatchmaking.SetLobbyMemberData(lobbyId, "IsReady", isReady.ToString());
 
             SteamMatchmaking.SetLobbyData(lobbyId, "UpdateTrigger", DateTime.UtcNow.Ticks.ToString());
+            return Task.FromResult(Task.CompletedTask);
         }
         
-        public async Task<List<LobbyUser>> GetLobbyMembersAsync()
+        public Task<List<LobbyUser>> GetLobbyMembersAsync()
         {
-            if (!_initialized) return new List<LobbyUser>();
-            return GetLobbyUsers(SteamUser.GetSteamID());
+            if (!_initialized) return Task.FromResult(new List<LobbyUser>());
+            return Task.FromResult<List<LobbyUser>>(GetLobbyUsers(SteamUser.GetSteamID()));
         }
 
-        public async Task InviteFriendAsync(FriendUser user)
+        public Task InviteFriendAsync(FriendUser user)
         {
-            if (!_initialized) return;
+            if (!_initialized) 
+                Task.FromResult(Task.CompletedTask);
 
             var steamID = new CSteamID(ulong.Parse(user.Id));
             //PurrLogger.Log($"Inviting: Steam ID: {steamID} | Friend ID: {user.Id} | Name: {user.DisplayName}");
             SteamMatchmaking.InviteUserToLobby(_currentLobby, steamID);
+            return Task.FromResult(Task.CompletedTask);
         }
         
         private void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)
@@ -350,6 +349,15 @@ namespace PurrLobby.Providers
             OnLobbyLeft?.Invoke();
             return Task.CompletedTask;
         }
+        
+        public Task LeaveLobbyAsync(string lobbyId)
+        {
+            if (!_initialized) return Task.CompletedTask;
+
+            var cLobbyId = new CSteamID(ulong.Parse(lobbyId));
+            SteamMatchmaking.LeaveLobby(cLobbyId);
+            return Task.CompletedTask;
+        }
 
         public async Task<List<Lobby>> SearchLobbiesAsync(int maxLobbiesToFind = 10, Dictionary<string, string> filters = null)
         {
@@ -400,12 +408,13 @@ namespace PurrLobby.Providers
             return await tcs.Task;
         }
         
-        public async Task SetLobbyStartedAsync()
+        public Task SetLobbyStartedAsync()
         {
             if (!_currentLobby.IsValid())
-                return;
+                return Task.FromResult(Task.CompletedTask);;
             
             SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
+            return Task.FromResult(Task.CompletedTask);
         }
         
         private LobbyUser CreateLobbyUser(CSteamID steamId, CSteamID lobbyId)

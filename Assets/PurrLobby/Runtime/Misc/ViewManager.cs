@@ -23,6 +23,8 @@ namespace PurrLobby
         {
             foreach (var view in allViews)
             {
+                if (!view)
+                    continue;
                 if (view.GetType() == typeof(T))
                 {
                     ShowViewInternal(view);
@@ -55,9 +57,16 @@ namespace PurrLobby
 
         private void HideViewInternal(View view)
         {
-            view.canvasGroup.alpha = 0;
-            view.canvasGroup.interactable = false;
-            view.canvasGroup.blocksRaycasts = false;
+            if(!view)
+                return;
+
+            if (view.canvasGroup)
+            {
+                view.canvasGroup.alpha = 0;
+                view.canvasGroup.interactable = false;
+                view.canvasGroup.blocksRaycasts = false;
+            }
+            
             view.OnHide();
             view.OnViewHide?.Invoke();
         }

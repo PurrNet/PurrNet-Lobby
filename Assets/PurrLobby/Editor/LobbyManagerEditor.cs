@@ -39,7 +39,7 @@ namespace PurrLobby.Editor
 
         private void DrawProviderDropdown(LobbyManager lobbyManager)
         {
-            var providers = FindObjectsOfType<MonoBehaviour>();
+            var providers = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None); 
             var providerOptions = new List<MonoBehaviour>();
             foreach (var provider in providers)
             {
@@ -156,6 +156,9 @@ namespace PurrLobby.Editor
 
             EditorGUI.indentLevel++;
 
+            if (!lobbyManager)
+                return;
+            
             var currentRoom = lobbyManager.CurrentLobby;
 
             if (currentRoom.IsValid)

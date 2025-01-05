@@ -19,6 +19,7 @@ namespace PurrLobby
         // Lobby Management
         Task<Lobby> CreateLobbyAsync(int maxPlayers, Dictionary<string, string> lobbyProperties = null);
         Task LeaveLobbyAsync();
+        Task LeaveLobbyAsync(string lobbyId);
         Task<Lobby> JoinLobbyAsync(string lobbyId);
         Task<List<Lobby>> SearchLobbiesAsync(int maxRoomsToFind = 10, Dictionary<string, string> filters = null);
         Task SetIsReadyAsync(string userId, bool isReady);
