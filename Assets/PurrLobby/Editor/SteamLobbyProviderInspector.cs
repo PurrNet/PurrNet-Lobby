@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using PurrLobby.Providers;
 
 #if STEAMWORKS_NET_PACKAGE
@@ -65,3 +66,5 @@ namespace PurrLobby.Editor
         }
     }
 }
+
+#endif
