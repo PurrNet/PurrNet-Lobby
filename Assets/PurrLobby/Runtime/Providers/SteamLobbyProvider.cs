@@ -500,7 +500,11 @@ namespace PurrLobby.Providers
         
         private void UpdateUserAvatar(CSteamID steamId, Texture2D avatar)
         {
+            if (!_currentLobby.IsValid())
+                return;
             var updatedMembers = GetLobbyUsers(_currentLobby);
+            if (updatedMembers == null || updatedMembers.Count <= 0)
+                return;
 
             for (int i = 0; i < updatedMembers.Count; i++)
             {
