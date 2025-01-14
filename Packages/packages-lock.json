@@ -259,7 +259,7 @@
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "f48d456f73c2b07beb4ccdccc40d05f88a856dce"
+      "hash": "5522b7ba8bf26d7e4b2591b449325b4660258eab"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
