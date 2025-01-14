@@ -139,7 +139,7 @@ namespace PurrLobby
             
             _currentProvider.OnLobbyUpdated += room => InvokeDelayed(() =>
             {
-                if (!HasRoomStateChanged(room)) return;
+                if (!HasRoomStateChanged(room) || room.Members.Count <= 0) return;
 
                 _lastKnownState = room;
                 _currentLobby = room;
