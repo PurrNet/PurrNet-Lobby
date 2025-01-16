@@ -189,8 +189,12 @@ namespace PurrLobby.Editor
                         EditorGUILayout.LabelField("Is Ready:", member.IsReady.ToString());
                         if (member.Avatar != null)
                         {
-                            GUILayout.Label("Avatar:");
-                            GUILayout.Label(new GUIContent(member.Avatar), GUILayout.Width(64), GUILayout.Height(64));
+                            EditorGUILayout.LabelField("Avatar:");
+                            var rect = EditorGUILayout.GetControlRect(false, 64);
+                            float indentOffset = EditorGUI.indentLevel * 15f;
+                            rect.x += indentOffset;
+                            rect.width = 64;
+                            EditorGUI.DrawPreviewTexture(rect, member.Avatar);
                         }
                         EditorGUI.indentLevel--;
                     }
