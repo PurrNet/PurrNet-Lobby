@@ -24,9 +24,10 @@ namespace PurrLobby.Editor
 
             if (Application.isPlaying)
             {
-                var isInitialized = (bool)provider.GetType()
-                    .GetField("_initialized", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    ?.GetValue(provider);
+                if (!provider)
+                    return;
+                
+                var isInitialized = provider.IsSteamClientAvailable;;
 
                 if (isInitialized)
                 {
@@ -34,7 +35,7 @@ namespace PurrLobby.Editor
 
                     var currentLobby = (CSteamID)provider.GetType()
                         .GetField("_currentLobby", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                        ?.GetValue(provider);
+                        ?.GetValue(provider)!;
 
                     if (currentLobby.m_SteamID != 0)
                     {

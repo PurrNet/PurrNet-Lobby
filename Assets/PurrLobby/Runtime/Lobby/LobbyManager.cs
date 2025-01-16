@@ -324,6 +324,31 @@ namespace PurrLobby
                 await _currentProvider.SetIsReadyAsync(userId, isReady);
             });
         }
+        
+        /// <summary>
+        /// Sets meta data on the current lobby we're in
+        /// </summary>
+        /// <param name="key">Key/Identifier of the meta data</param>
+        /// <param name="value">The value of the meta data to be stored</param>
+        public void SetLobbyData(string key, string value)
+        {
+            RunTask(async () =>
+            {
+                EnsureProviderSet();
+                await _currentProvider.SetLobbyDataAsync(key, value);
+            });
+        }
+        
+        /// <summary>
+        /// Gets meta data from the current lobby we're in
+        /// </summary>
+        /// <param name="key">Key/Identifier of the meta data we want</param>
+        /// <returns>Value of the meta data we get</returns>
+        public async Task<String> GetLobbyData(string key) 
+        {
+            EnsureProviderSet();
+            return await _currentProvider.GetLobbyDataAsync(key);
+        }
 
         /// <summary>
         /// Toggles the local users ready state automatically
