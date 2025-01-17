@@ -10,7 +10,9 @@ using PurrNet.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+#if STEAMWORKS_NET_PACKAGE && !DISABLESTEAMWORKS
 using Steamworks;
+#endif
 using UnityEngine;
 using UnityEngine.Events;
 
