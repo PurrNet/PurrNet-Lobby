@@ -539,7 +539,7 @@ namespace PurrLobby.Providers
             {
                 Name = Steamworks.SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 IsValid = true,
-                lobbyId = _currentLobby.m_SteamID.ToString(),
+                LobbyId = _currentLobby.m_SteamID.ToString(),
                 MaxPlayers = Steamworks.SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 Properties = new Dictionary<string, string>(), // Use existing properties if needed
                 Members = updatedMembers
@@ -646,6 +646,11 @@ namespace PurrLobby.Providers
             //PurrLogger.Log($"Invite accepted. Joining lobby {lobbyId.m_SteamID}");
 
             _ = JoinLobbyAsync(lobbyId.m_SteamID.ToString());
+        }
+
+        public Task SetAllReadyAsync()
+        {
+            return Task.FromResult(Task.CompletedTask);
         }
 #endif
     }

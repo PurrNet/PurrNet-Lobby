@@ -27,7 +27,7 @@ namespace PurrLobby.Editor
                 if (!provider)
                     return;
                 
-                var isInitialized = provider.IsSteamClientAvailable;;
+                var isInitialized = provider.IsSteamClientAvailable;
 
                 if (isInitialized)
                 {

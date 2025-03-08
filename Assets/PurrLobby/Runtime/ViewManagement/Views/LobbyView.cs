@@ -9,7 +9,7 @@ namespace PurrLobby
 
         public override void OnShow()
         {
-            codeButton.Init(lobbyManager.CurrentLobby.lobbyId);
+            codeButton.Init(lobbyManager.CurrentLobby.LobbyId);
         }
     }
 }

@@ -164,7 +164,11 @@ namespace PurrLobby.Editor
 
             if (currentRoom.IsValid)
             {
-                EditorGUILayout.LabelField("Room ID:", currentRoom.lobbyId);
+                EditorGUILayout.LabelField("Room ID:", currentRoom.LobbyId);
+                if(!string.IsNullOrWhiteSpace(currentRoom.LobbyCode))
+                {
+                    EditorGUILayout.LabelField("Lobby Code:", currentRoom.LobbyCode);
+                }
                 EditorGUILayout.LabelField("Max Players:", currentRoom.MaxPlayers.ToString());
                 EditorGUILayout.LabelField("Room Properties:");
                 foreach (var property in currentRoom.Properties)

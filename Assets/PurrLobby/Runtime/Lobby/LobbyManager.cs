@@ -53,6 +53,8 @@ namespace PurrLobby
         public Lobby CurrentLobby => _currentLobby;
         private LobbyDataHolder _lobbyDataHolder;
 
+        private bool IsStarting = false;
+
         private void Awake()
         {
             _lastKnownState = new Lobby { IsValid = false };
@@ -77,7 +79,7 @@ namespace PurrLobby
 
             if (_lobbyDataHolder.CurrentLobby.IsValid)
             {
-                LeaveLobby(_lobbyDataHolder.CurrentLobby.lobbyId);
+                LeaveLobby(_lobbyDataHolder.CurrentLobby.LobbyId);
                 _lobbyDataHolder.SetCurrentLobby(default);
             }
         }
@@ -139,14 +141,15 @@ namespace PurrLobby
             
             _currentProvider.OnLobbyUpdated += room => InvokeDelayed(() =>
             {
-                if (!HasRoomStateChanged(room) || room.Members.Count <= 0 || !room.IsValid) return;
+                if(!_lastKnownState.HasChanged(room) || room.Members.Count <= 0 || !room.IsValid) return;
 
                 _lastKnownState = room;
                 _currentLobby = room;
                 OnRoomUpdated?.Invoke(room);
 
-                if (room.Members.TrueForAll(x => x.IsReady))
+                if (!IsStarting && room.Members.TrueForAll(x => x.IsReady))
                 {
+                    IsStarting = true; //Prevent calling ready again if lobby is updated after all ready
                     CallOnAllReady();
                 }
             });
@@ -382,7 +385,11 @@ namespace PurrLobby
         {
             await WaitForAllTasksAsync();
             if(_currentLobby.IsValid && _currentLobby.Members.TrueForAll(x => x.IsReady))
+            {
+                await _currentProvider.SetAllReadyAsync();
+
                 OnAllReady?.Invoke();
+            }
         }
         
         public async Task WaitForAllTasksAsync()
@@ -418,23 +425,6 @@ namespace PurrLobby
         {
             if (_currentProvider == null)
                 throw new InvalidOperationException("No lobby provider has been set.");
-        }
-        
-        private bool HasRoomStateChanged(Lobby @new)
-        {
-            if (!_lastKnownState.IsValid || @new.Name != _lastKnownState.Name || @new.lobbyId != _lastKnownState.lobbyId || @new.Members.Count != _lastKnownState.Members.Count || @new.Properties.Count != _lastKnownState.Properties.Count)
-                return true;
-
-            for (int i = 0; i < @new.Members.Count; i++)
-            {
-                var newMember = @new.Members[i];
-                var oldMember = _lastKnownState.Members[i];
-
-                if (newMember.Id != oldMember.Id || newMember.IsReady != oldMember.IsReady || newMember.DisplayName != oldMember.DisplayName || newMember.Avatar != oldMember.Avatar)
-                    return true;
-            }
-
-            return false;
         }
 
         public void SetLobbyStarted()

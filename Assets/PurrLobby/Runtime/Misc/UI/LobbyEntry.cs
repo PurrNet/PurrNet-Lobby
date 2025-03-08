@@ -13,7 +13,7 @@ namespace PurrLobby
         
         public void Init(Lobby room, LobbyManager lobbyManager)
         {
-            lobbyNameText.text = room.Name.Length > 0 ? room.Name : room.lobbyId;
+            lobbyNameText.text = room.Name.Length > 0 ? room.Name : room.LobbyId;
             playersText.text = $"{room.Members.Count}/{room.MaxPlayers}";
             _room = room;
             _lobbyManager = lobbyManager;
@@ -21,7 +21,7 @@ namespace PurrLobby
 
         public void OnClick()
         {
-            _lobbyManager.JoinLobby(_room.lobbyId);
+            _lobbyManager.JoinLobby(_room.LobbyId);
         }
     }
 }
