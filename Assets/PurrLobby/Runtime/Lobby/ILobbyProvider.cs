@@ -2,17 +2,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine.Events;
 
-namespace PurrLobby
-{
-    public interface ILobbyProvider
-    {
+namespace PurrLobby {
+    public interface ILobbyProvider {
         // Initialization
         Task InitializeAsync();
         void Shutdown();
 
         // Friend List
         Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter);
-        
+
         // Invitations
         Task InviteFriendAsync(FriendUser user);
 
@@ -27,6 +25,7 @@ namespace PurrLobby
         Task<string> GetLobbyDataAsync(string key);
         Task<List<LobbyUser>> GetLobbyMembersAsync();
         Task<string> GetLocalUserIdAsync();
+        Task SetAllReadyAsync();
         Task SetLobbyStartedAsync();
 
         // Events
