@@ -2,10 +2,10 @@ using System.Collections;
 using PurrNet;
 using PurrNet.Logging;
 using PurrNet.Transports;
-using PurrNet.UTP;
 using UnityEngine;
 
 #if UTP_LOBBYRELAY
+using PurrNet.UTP;
 using Unity.Services.Relay.Models;
 #endif
 
@@ -49,16 +49,18 @@ namespace PurrLobby
 
             if(_networkManager.transport is PurrTransport) {
                 (_networkManager.transport as PurrTransport).roomName = _lobbyDataHolder.CurrentLobby.LobbyId;
-            } else if(_networkManager.transport is UTPTransport) {
+            } 
+            
 #if UTP_LOBBYRELAY
+            else if(_networkManager.transport is UTPTransport) {
                 if(_lobbyDataHolder.CurrentLobby.IsOwner) {
                     (_networkManager.transport as UTPTransport).InitializeRelayServer((Allocation)_lobbyDataHolder.CurrentLobby.ServerObject);
                 }
                 (_networkManager.transport as UTPTransport).InitializeRelayClient(_lobbyDataHolder.CurrentLobby.Properties["JoinCode"]);
+            }
 #else
                 //P2P Connection, receive IP/Port from server
 #endif
-            }
 
             if(_lobbyDataHolder.CurrentLobby.IsOwner)
                 _networkManager.StartServer();

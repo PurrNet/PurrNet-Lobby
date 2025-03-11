@@ -317,7 +317,7 @@ namespace PurrLobby.Providers
                     {
                         Name = Steamworks.SteamMatchmaking.GetLobbyData(lobbyId, "Name"),
                         IsValid = true,
-                        lobbyId = lobbyId.m_SteamID.ToString(),
+                        LobbyId = lobbyId.m_SteamID.ToString(),
                         MaxPlayers = maxPlayers,
                         Properties = lobbyProperties,
                         Members = GetLobbyUsers(lobbyId)
