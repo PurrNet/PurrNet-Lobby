@@ -91,6 +91,7 @@ namespace PurrLobby.Providers
                     lobbyId = new Steamworks.CSteamID(result.m_ulSteamIDLobby);
                     tcs.TrySetResult(true);
                     Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, "Name", lobbyName);
+                    Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, "Started", "False");
                 }
                 else
                     tcs.TrySetResult(false);
@@ -354,7 +355,10 @@ namespace PurrLobby.Providers
         public Task SetLobbyStartedAsync()
         {
             if (IsSteamClientAvailable)
+            {
                 Steamworks.SteamMatchmaking.SetLobbyGameServer(_currentLobby, 0, 0, Steamworks.SteamUser.GetSteamID());
+                Steamworks.SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
+            }
 
             return Task.FromResult(Task.CompletedTask);
         }
@@ -362,7 +366,10 @@ namespace PurrLobby.Providers
         public void SetLobbyStarted(Steamworks.CSteamID serverId)
         {
             if (IsSteamClientAvailable)
+            {
                 Steamworks.SteamMatchmaking.SetLobbyGameServer(_currentLobby, 0, 0, serverId);
+                Steamworks.SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
+            }
         }
 
         public void SetLobbyStarted(string address, short port)
@@ -376,6 +383,7 @@ namespace PurrLobby.Providers
                 ip += (uint)ipBytes[2] << 8;
                 ip += (uint)ipBytes[3];
                 Steamworks.SteamMatchmaking.SetLobbyGameServer(_currentLobby, ip, (ushort)port, Steamworks.CSteamID.Nil);
+                Steamworks.SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
             }
         }
 
@@ -390,6 +398,7 @@ namespace PurrLobby.Providers
                 ip += (uint)ipBytes[2] << 8;
                 ip += (uint)ipBytes[3];
                 Steamworks.SteamMatchmaking.SetLobbyGameServer(_currentLobby, ip, (ushort)port, Steamworks.CSteamID.Nil);
+                Steamworks.SteamMatchmaking.SetLobbyData(_currentLobby, "Started", "True");
             }
         }
 
