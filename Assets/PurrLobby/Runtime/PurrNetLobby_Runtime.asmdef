@@ -29,11 +29,6 @@
             "name": "com.unity.services.authentication",
             "expression": "3.4.0",
             "define": "UTP_AUTH"
-        },
-        {
-            "name": "com.unity.services.multiplayer",
-            "expression": "1.1.2",
-            "define": "UTP_LOBBYRELAY"
         }
     ],
     "noEngineReferences": false

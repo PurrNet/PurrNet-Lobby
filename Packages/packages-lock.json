@@ -100,6 +100,15 @@
         "com.unity.modules.uielements": "1.0.0"
       }
     },
+    "com.unity.multiplayer.playmode": {
+      "version": "1.3.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.2"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",
       "depth": 1,
@@ -251,7 +260,7 @@
       },
       "url": "https://packages.unity.com"
     },
-    "purrnet": {
+    "dev.purrnet.purrnet": {
       "version": "https://github.com/BlenMiner/PurrNet.git?path=/Assets/PurrNet#dev",
       "depth": 0,
       "source": "git",
@@ -259,7 +268,7 @@
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "7dbfb46cee95ce38cf84e80f5f02f92dc97eedba"
+      "hash": "0c39fe42fa94ac6b9b146bfe283e519c0e767f97"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
