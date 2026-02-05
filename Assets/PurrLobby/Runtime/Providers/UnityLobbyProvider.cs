@@ -602,6 +602,9 @@ namespace PurrLobby.Providers {
                 await AllocateRelayServerAsync(CurrentLobby.MaxPlayers, RegionId);
 
                 await SetLobbyDataAsync("JoinCode", RelayJoinCode);
+                
+                // Manually trigger lobby update to propagate RelayServerAllocation to the lobby
+                OnLobbyUpdate();
             } else {
                 RelayJoinCode = await WaitForJoinCodeAsync();
             }
