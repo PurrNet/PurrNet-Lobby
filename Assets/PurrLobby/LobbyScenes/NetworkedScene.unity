@@ -150,16 +150,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baacc2bfe126d544691d4f39fa3785f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _stopPlayingOnDisconnect: 0
   _startServerFlags: 0
   _startClientFlags: 0
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _cheetahData: 0
   _transport: {fileID: 104676491}
   _networkPrefabs: {fileID: 11400000, guid: 61ab6c8df370f33429ba4e9c3aa2c17e, type: 2}
+  _networkAssets: {fileID: 0}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
+  _authenticator: {fileID: 0}
   _tickRate: 20
+  _patchLingeringProcessBug: 0
 --- !u!4 &104676489
 Transform:
   m_ObjectHideFlags: 0
@@ -199,9 +202,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 332e746c3c3253246aacad4d5559f1fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _roomName: 
-  _region: eu-central
-  _host: eu1.purrlay.riten.dev
+  _masterServer: https://purrtransport.purrservers.com/
+  _roomName: PurrNetRulez
+  _region: nj-us
+  _host: purrtransport-nj-us.purrservers.com
+  _timeoutInSeconds: 5
+  _pollEventsInUpdate: 0
 --- !u!1 &270819952
 GameObject:
   m_ObjectHideFlags: 0
