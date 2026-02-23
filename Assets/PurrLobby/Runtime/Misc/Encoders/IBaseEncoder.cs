@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace PurrLobby
 {
     public interface IBaseEncoder
