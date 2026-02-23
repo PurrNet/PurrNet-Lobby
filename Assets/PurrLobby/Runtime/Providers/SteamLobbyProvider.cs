@@ -113,6 +113,7 @@ namespace PurrLobby.Providers
             return LobbyFactory.Create(
                 lobbyName,
                 lobbyId.m_SteamID.ToString(),
+                LobbyCode.Encode(lobbyId.m_SteamID),
                 maxPlayers,
                 true,
                 GetLobbyUsers(lobbyId),
@@ -252,6 +253,7 @@ namespace PurrLobby.Providers
             var lobby = LobbyFactory.Create(
                 Steamworks.SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 lobbyId,
+                LobbyCode.Encode(cLobbyId.m_SteamID),
                 Steamworks.SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 false,
                 GetLobbyUsers(cLobbyId),
@@ -570,6 +572,7 @@ namespace PurrLobby.Providers
             var updatedLobby = LobbyFactory.Create(
                 Steamworks.SteamMatchmaking.GetLobbyData(_currentLobby, "Name"),
                 _currentLobby.m_SteamID.ToString(),
+                LobbyCode.Encode(_currentLobby.m_SteamID),
                 Steamworks.SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 isOwner,
                 updatedLobbyUsers,
@@ -640,6 +643,7 @@ namespace PurrLobby.Providers
             var updatedLobby = LobbyFactory.Create(
                 data,
                 _currentLobby.m_SteamID.ToString(),
+                LobbyCode.Encode(_currentLobby.m_SteamID),
                 Steamworks.SteamMatchmaking.GetLobbyMemberLimit(_currentLobby),
                 isOwner,
                 updatedLobbyUsers,

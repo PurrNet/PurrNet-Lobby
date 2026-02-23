@@ -21,7 +21,7 @@ namespace PurrLobby
 
         public void OnClick()
         {
-            _lobbyManager.JoinLobby(_room.LobbyId);
+            _lobbyManager.JoinLobbyByCode(_room.LobbyCode);
         }
     }
 }

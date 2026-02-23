@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -14,6 +16,14 @@ namespace PurrLobby.Editor
         private bool showEvents = false;
         private bool showRoomStatus = true;
         private Dictionary<string, bool> memberFoldouts = new Dictionary<string, bool>();
+        private List<Type> encoderTypes;
+        private string[] encoderNames;
+
+        private void OnEnable()
+        {
+            encoderTypes = LobbyCode.GetEncoderTypes();
+            encoderNames = encoderTypes.Select(t => t.Name).ToArray();
+        }
 
         public override void OnInspectorGUI()
         {
@@ -22,7 +32,11 @@ namespace PurrLobby.Editor
             DrawProviderDropdown(lobbyManager);
 
             EditorGUILayout.Space();
-
+            
+            DrawEncoderDropdown();
+            
+            EditorGUILayout.Space();
+            
             DrawCreateRoomArgs();
             
             EditorGUILayout.Space();
@@ -73,6 +87,20 @@ namespace PurrLobby.Editor
             }
         }
 
+        private void DrawEncoderDropdown()
+        {
+            var property = serializedObject.FindProperty("lobbyCodeEncoderType");
+
+            EditorGUI.BeginChangeCheck();
+            var encoderSelectedIndex = Array.IndexOf(encoderNames, property.stringValue);
+            encoderSelectedIndex = EditorGUILayout.Popup("Lobby Code Encoder", encoderSelectedIndex, encoderNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                property.stringValue = encoderNames[encoderSelectedIndex];
+                serializedObject.ApplyModifiedProperties();
+            }
+        }
+        
         private void DrawCreateRoomArgs()
         {
             var serializedObject = new SerializedObject(target);
