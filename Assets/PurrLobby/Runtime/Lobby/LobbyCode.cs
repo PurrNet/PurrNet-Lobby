@@ -9,10 +9,18 @@ namespace PurrLobby
         private static IBaseEncoder encoder;
         public static string Encode(ulong value)
         {
+            if (encoder == null)
+            {
+                return value.ToString();
+            }
             return encoder.Encode(value);
         }
         public static ulong Decode(string value)
         {
+            if (encoder == null)
+            {
+                return ulong.Parse(value);
+            }
             return encoder.Decode(value);
         }
         
@@ -24,6 +32,10 @@ namespace PurrLobby
 
         public static void AssignEncoder(string name)
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                return;
+            }
             var types = GetEncoderTypes();
             var type = types.FirstOrDefault(t => t.Name == name);
             if (type == null)
