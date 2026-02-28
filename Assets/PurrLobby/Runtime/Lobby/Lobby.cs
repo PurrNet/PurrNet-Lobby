@@ -40,6 +40,7 @@ namespace PurrLobby {
                 Name = name,
                 IsValid = true,
                 LobbyId = lobbyId,
+                LobbyCode = LobbyCode.Encode(uint.Parse(lobbyId)),
                 MaxPlayers = maxPlayers,
                 Properties = properties ?? new Dictionary<string, string>(),
                 IsOwner = isOwner,

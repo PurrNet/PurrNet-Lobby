@@ -11,6 +11,7 @@ namespace PurrLobby
     public class LobbyManager : MonoBehaviour
     {
         [SerializeField] private MonoBehaviour currentProvider;
+        [SerializeField] private string lobbyCodeEncoderType;
         private ILobbyProvider _currentProvider;
 
         private readonly Queue<Action> _delayedActions = new Queue<Action>();
@@ -64,6 +65,8 @@ namespace PurrLobby
             else
                 PurrLogger.LogWarning("No lobby provider assigned to LobbyManager.");
 
+            LobbyCode.AssignEncoder(lobbyCodeEncoderType);
+            
             SetupDataHolder();
         }
 
@@ -267,6 +270,16 @@ namespace PurrLobby
                 await _currentProvider.LeaveLobbyAsync(lobbyId);
                 OnRoomLeft?.Invoke();
             });
+        }
+        
+        /// <summary>
+        /// Join the lobby with the given lobby code
+        /// </summary>
+        /// <param name="lobbyCode">lobby code of the lobby to join</param>
+        public void JoinLobbyByCode(string lobbyCode)
+        {
+            var roomId = LobbyCode.Decode(lobbyCode);
+            JoinLobby(roomId.ToString());
         }
 
         /// <summary>
