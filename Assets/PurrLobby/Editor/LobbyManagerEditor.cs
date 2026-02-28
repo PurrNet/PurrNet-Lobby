@@ -90,6 +90,11 @@ namespace PurrLobby.Editor
         private void DrawEncoderDropdown()
         {
             var property = serializedObject.FindProperty("lobbyCodeEncoderType");
+            if (encoderTypes.Count == 0)
+            {
+                EditorGUILayout.HelpBox($"No implementation of {nameof(IBaseEncoder)} found.", MessageType.Warning);
+                return;
+            }
 
             EditorGUI.BeginChangeCheck();
             var encoderSelectedIndex = Array.IndexOf(encoderNames, property.stringValue);
