@@ -11,18 +11,21 @@ namespace PurrLobby.Editor
     [CustomEditor(typeof(LobbyManager))]
     public class LobbyManagerEditor : UnityEditor.Editor
     {
+        private bool showLobbyCodeEncoder = false;
         private bool showCreateRoomArgs = false;
         private bool showSearchRoomArgs = false;
         private bool showEvents = false;
         private bool showRoomStatus = true;
         private Dictionary<string, bool> memberFoldouts = new Dictionary<string, bool>();
-        private List<Type> encoderTypes;
         private string[] encoderNames;
 
         private void OnEnable()
         {
-            encoderTypes = LobbyCode.GetEncoderTypes();
-            encoderNames = encoderTypes.Select(t => t.Name).ToArray();
+            var encoderTypes = LobbyCode.GetEncoderTypes();
+            if (encoderTypes.Count > 0)
+            {
+                encoderNames = encoderTypes.Select(t => t.Name).ToArray();
+            }
         }
 
         public override void OnInspectorGUI()
@@ -32,13 +35,13 @@ namespace PurrLobby.Editor
             DrawProviderDropdown(lobbyManager);
 
             EditorGUILayout.Space();
-            
+
             DrawEncoderDropdown();
-            
+
             EditorGUILayout.Space();
-            
+
             DrawCreateRoomArgs();
-            
+
             EditorGUILayout.Space();
 
             DrawSearchRoomArgs();
@@ -54,7 +57,7 @@ namespace PurrLobby.Editor
 
         private void DrawProviderDropdown(LobbyManager lobbyManager)
         {
-            var providers = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None); 
+            var providers = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             var providerOptions = new List<MonoBehaviour>();
             foreach (var provider in providers)
             {
@@ -89,23 +92,35 @@ namespace PurrLobby.Editor
 
         private void DrawEncoderDropdown()
         {
-            var property = serializedObject.FindProperty("lobbyCodeEncoderType");
-            if (encoderTypes.Count == 0)
+            var serializedObject = new SerializedObject(target);
+            var lobbyCodeProp = serializedObject.FindProperty("lobbyCodeEncoderType");
+            if (lobbyCodeProp != null)
             {
-                EditorGUILayout.HelpBox($"No implementation of {nameof(IBaseEncoder)} found.", MessageType.Warning);
-                return;
+                showLobbyCodeEncoder = EditorGUILayout.Foldout(showLobbyCodeEncoder, "Lobby Code Encoder", true);
+                if (showLobbyCodeEncoder)
+                {
+                    EditorGUI.indentLevel++;
+                    if (encoderNames.Length == 0)
+                    {
+                        EditorGUILayout.HelpBox($"No implementation of {nameof(IBaseEncoder)} found.", MessageType.Warning);
+                        return;
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+                    var encoderSelectedIndex = Array.IndexOf(encoderNames, lobbyCodeProp.stringValue);
+                    encoderSelectedIndex = EditorGUILayout.Popup("Type", encoderSelectedIndex, encoderNames);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        lobbyCodeProp.stringValue = encoderNames[encoderSelectedIndex];
+                        serializedObject.ApplyModifiedProperties();
+                    }
+                    EditorGUI.indentLevel--;
+                }
             }
 
-            EditorGUI.BeginChangeCheck();
-            var encoderSelectedIndex = Array.IndexOf(encoderNames, property.stringValue);
-            encoderSelectedIndex = EditorGUILayout.Popup("Lobby Code Encoder", encoderSelectedIndex, encoderNames);
-            if (EditorGUI.EndChangeCheck())
-            {
-                property.stringValue = encoderNames[encoderSelectedIndex];
-                serializedObject.ApplyModifiedProperties();
-            }
+            serializedObject.ApplyModifiedProperties();
         }
-        
+
         private void DrawCreateRoomArgs()
         {
             var serializedObject = new SerializedObject(target);
@@ -192,13 +207,13 @@ namespace PurrLobby.Editor
 
             if (!lobbyManager)
                 return;
-            
+
             var currentRoom = lobbyManager.CurrentLobby;
 
             if (currentRoom.IsValid)
             {
                 EditorGUILayout.LabelField("Room ID:", currentRoom.LobbyId);
-                if(!string.IsNullOrWhiteSpace(currentRoom.LobbyCode))
+                if (!string.IsNullOrWhiteSpace(currentRoom.LobbyCode))
                 {
                     EditorGUILayout.LabelField("Lobby Code:", currentRoom.LobbyCode);
                 }
