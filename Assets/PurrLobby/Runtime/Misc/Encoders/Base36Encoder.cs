@@ -4,6 +4,7 @@ namespace PurrLobby
 {
     public class Base36Encoder : IBaseEncoder
     {
+        private const int MaxBase36Length = 13; // ceil(log36(ulong.MaxValue))
         private const string Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         public string Encode(ulong value)
@@ -30,6 +31,11 @@ namespace PurrLobby
             }
 
             value = value.ToUpper().Trim();
+            if (value.Length > MaxBase36Length)
+            {
+                throw new FormatException($"Input exceeds maximum Base36 length ({MaxBase36Length}).");
+            }
+
             ulong result = 0;
             foreach (var c in value)
             {

@@ -4,6 +4,7 @@ namespace PurrLobby
 {
     public class Base62Encoder : IBaseEncoder
     {
+        private const int MaxBase62Length = 11; // ceil(log62(ulong.MaxValue))
         private const string Chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         public string Encode(ulong value)
@@ -29,6 +30,11 @@ namespace PurrLobby
                 throw new ArgumentException("Value cannot be null or empty.");
             }
 
+            if (value.Length > MaxBase62Length)
+            {
+                throw new FormatException($"Input exceeds maximum Base62 length ({MaxBase62Length}).");
+            }
+            
             ulong result = 0;
             foreach (var c in value)
             {
